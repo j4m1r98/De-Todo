@@ -154,68 +154,6 @@
             color: white;
         }
         
-        /* Controles de edición */
-        .edit-controls {
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .edit-controls h3 {
-            margin-bottom: 15px;
-            color: #4ecdc4;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid rgba(255,255,255,0.2);
-            background: rgba(0,0,0,0.3);
-            color: white;
-        }
-        
-        .form-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-        
-        .btn-primary {
-            background: #4ecdc4;
-            color: white;
-        }
-        
-        .btn-secondary {
-            background: #ff6b6b;
-            color: white;
-        }
-        
-        .btn:hover {
-            opacity: 0.9;
-            transform: translateY(-2px);
-        }
-        
         /* Lista de capítulos */
         .episodes-container {
             display: grid;
@@ -323,33 +261,8 @@
     <div class="container">
         <header>
             <h1>Reproductor de Videos</h1>
-            <p class="subtitle">Administra y reproduce tus videos e iframes</p>
+            <p class="subtitle">Reproduce tus videos e iframes favoritos</p>
         </header>
-        
-        <!-- Controles de edición -->
-        <div class="edit-controls">
-            <h3>Agregar/Editar Capítulo</h3>
-            <div class="form-group">
-                <label for="episodeTitle">Título del Capítulo</label>
-                <input type="text" id="episodeTitle" placeholder="Ingresa el título del capítulo">
-            </div>
-            <div class="form-group">
-                <label for="episodeUrl">URL del Video o Iframe</label>
-                <input type="text" id="episodeUrl" placeholder="Ingresa la URL del video o iframe">
-            </div>
-            <div class="form-group">
-                <label for="episodeType">Tipo de Contenido</label>
-                <select id="episodeType">
-                    <option value="video">Video (mp4)</option>
-                    <option value="iframe">Iframe (embed)</option>
-                </select>
-            </div>
-            <div class="form-buttons">
-                <button class="btn btn-primary" id="addEpisodeBtn">Agregar Capítulo</button>
-                <button class="btn btn-secondary" id="updateEpisodeBtn" style="display:none;">Actualizar Capítulo</button>
-                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;">Cancelar</button>
-            </div>
-        </div>
         
         <!-- Reproductor de video con Video.js -->
         <div class="video-player">
@@ -401,13 +314,18 @@
     <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
 
     <script>
+        // ==============================================
+        // EDITAR AQUÍ: AGREGAR/EDITAR VIDEOS E IFRAMES
+        // ==============================================
+        
         // Array para almacenar los episodios
+        // Modifica este array para agregar, editar o eliminar videos e iframes
         let EPISODES = [
             {
                 id: 1,
-                title: "Episodio 1 - Introducción",
-                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                type: "video"
+                title: "Mugen Gacha Episodio 4",
+                url: "https://streamwish.to/e/6d0a7rttfdur",
+                type: "iframe"
             },
             {
                 id: 2,
@@ -465,9 +383,12 @@
             }
         ];
 
+        // ==============================================
+        // NO EDITAR A PARTIR DE AQUÍ
+        // ==============================================
+
         let currentEpisodeIndex = null;
         let player = null;
-        let editingEpisodeId = null;
 
         // Inicialización
         function initApp() {
@@ -490,131 +411,11 @@
                 });
 
                 generateEpisodes();
-                setupEventListeners();
             } catch (e) {
                 console.error('Error al inicializar Video.js:', e);
                 document.getElementById('videoTitle').textContent = 'No se pudo iniciar el reproductor.';
                 generateEpisodes();
-                setupEventListeners();
             }
-        }
-
-        // Configurar event listeners para los controles de edición
-        function setupEventListeners() {
-            document.getElementById('addEpisodeBtn').addEventListener('click', addEpisode);
-            document.getElementById('updateEpisodeBtn').addEventListener('click', updateEpisode);
-            document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
-        }
-
-        // Agregar un nuevo episodio
-        function addEpisode() {
-            const title = document.getElementById('episodeTitle').value;
-            const url = document.getElementById('episodeUrl').value;
-            const type = document.getElementById('episodeType').value;
-            
-            if (!title || !url) {
-                alert('Por favor, completa todos los campos');
-                return;
-            }
-            
-            const newEpisode = {
-                id: EPISODES.length > 0 ? Math.max(...EPISODES.map(e => e.id)) + 1 : 1,
-                title: title,
-                url: url,
-                type: type
-            };
-            
-            EPISODES.push(newEpisode);
-            generateEpisodes();
-            clearForm();
-        }
-
-        // Actualizar un episodio existente
-        function updateEpisode() {
-            if (editingEpisodeId === null) return;
-            
-            const title = document.getElementById('episodeTitle').value;
-            const url = document.getElementById('episodeUrl').value;
-            const type = document.getElementById('episodeType').value;
-            
-            if (!title || !url) {
-                alert('Por favor, completa todos los campos');
-                return;
-            }
-            
-            const episodeIndex = EPISODES.findIndex(e => e.id === editingEpisodeId);
-            if (episodeIndex !== -1) {
-                EPISODES[episodeIndex].title = title;
-                EPISODES[episodeIndex].url = url;
-                EPISODES[episodeIndex].type = type;
-            }
-            
-            generateEpisodes();
-            clearForm();
-            resetEditMode();
-        }
-
-        // Cancelar edición
-        function cancelEdit() {
-            clearForm();
-            resetEditMode();
-        }
-
-        // Limpiar formulario
-        function clearForm() {
-            document.getElementById('episodeTitle').value = '';
-            document.getElementById('episodeUrl').value = '';
-            document.getElementById('episodeType').value = 'video';
-        }
-
-        // Resetear modo de edición
-        function resetEditMode() {
-            editingEpisodeId = null;
-            document.getElementById('addEpisodeBtn').style.display = 'block';
-            document.getElementById('updateEpisodeBtn').style.display = 'none';
-            document.getElementById('cancelEditBtn').style.display = 'none';
-        }
-
-        // Activar modo de edición
-        function activateEditMode(episodeId) {
-            const episode = EPISODES.find(e => e.id === episodeId);
-            if (!episode) return;
-            
-            editingEpisodeId = episodeId;
-            document.getElementById('episodeTitle').value = episode.title;
-            document.getElementById('episodeUrl').value = episode.url;
-            document.getElementById('episodeType').value = episode.type;
-            
-            document.getElementById('addEpisodeBtn').style.display = 'none';
-            document.getElementById('updateEpisodeBtn').style.display = 'block';
-            document.getElementById('cancelEditBtn').style.display = 'block';
-        }
-
-        // Eliminar un episodio
-        function deleteEpisode(episodeId) {
-            if (confirm('¿Estás seguro de que quieres eliminar este capítulo?')) {
-                EPISODES = EPISODES.filter(e => e.id !== episodeId);
-                
-                // Si eliminamos el episodio actual, limpiar el reproductor
-                if (currentEpisodeIndex !== null && EPISODES[currentEpisodeIndex] && EPISODES[currentEpisodeIndex].id === episodeId) {
-                    stopCurrentPlayback();
-                    currentEpisodeIndex = null;
-                    updateNavigation();
-                }
-                
-                generateEpisodes();
-            }
-        }
-
-        // Detener la reproducción actual
-        function stopCurrentPlayback() {
-            if (player) {
-                player.pause();
-                player.src('');
-            }
-            document.getElementById('videoIframe').src = '';
-            document.getElementById('videoTitle').textContent = 'Selecciona un capítulo para reproducir';
-            document.getElementById('videoDuration').textContent = 'Duración: --:--';
         }
 
         // Generar la lista de episodios
@@ -631,7 +432,7 @@
                 const typeText = episode.type === 'video' ? 'Video' : 'Iframe';
                 
                 episodeCard.innerHTML = `
-                    <div class="episode-number">Capítulo ${episode.id}</div>
+                    <div class="episode-number">Video ${episode.id}</div>
                     <div class="episode-title">${episode.title}</div>
                     <div class="episode-duration">
                         <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -640,17 +441,10 @@
                         Reproducir
                     </div>
                     <div class="episode-type ${typeClass}">${typeText}</div>
-                    <div class="episode-actions" style="margin-top: 10px; display: flex; gap: 10px;">
-                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="activateEditMode(${episode.id})">Editar</button>
-                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteEpisode(${episode.id})">Eliminar</button>
-                    </div>
                 `;
                 
-                episodeCard.addEventListener('click', function(e) {
-                    // Evitar que el clic en los botones de edición active la reproducción
-                    if (!e.target.closest('.episode-actions')) {
-                        playEpisode(index);
-                    }
+                episodeCard.addEventListener('click', function() {
+                    playEpisode(index);
                 });
                 
                 container.appendChild(episodeCard);

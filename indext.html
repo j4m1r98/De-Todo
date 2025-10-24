@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Videos</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- 🔹 Video.js CSS -->
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet">
+    <!-- 🔹 Material Icons -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;            
+            padding: 20px;
+        }
+                
+        h1 {
+            font-size: 2.5rem;            
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-top: 20px;
+            margin-bottom: 25px;
+        }
+        
+        /* Reproductor de video */
+        .video-player {
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        
+        .video-controls-top {
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .video-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 */
+        }
+        
+        #videoPlayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Contenedor para iframe */
+        .iframe-container {
+            position: relative;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* 16:9 */
+        }
+        
+        .iframe-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .video-controls-bottom {
+            background: rgba(0,0,0,0.8);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .video-title {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: center;           
+            margin-top: 10px;
+        }
+        
+        .nav-button {
+            background: rgba(255,255,255,0.1);
+            border: 2px solid transparent;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            display: flex;
+            margin: 0 10px;
+            align-items: center;            
+            min-width: 120px;
+        }
+        
+        .nav-button:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .nav-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .nav-button.prev {
+            border-color: #ff6b6b;
+            color: white;
+        }
+        
+        .nav-button.next {
+            border-color: #4ecdc4;
+            color: white;
+        }
+        
+        /* Controles de edición */
+        .edit-controls {
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .edit-controls h3 {
+            margin-bottom: 15px;
+            color: #4ecdc4;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.3);
+            color: white;
+        }
+        
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: #4ecdc4;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+        
+        /* Lista de capítulos */
+        .episodes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            margin-top: 20px;
+        }
+        
+        .episode-card {
+            background: rgba(255,255,255,0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255,255,255,0.1);
+            position: relative;
+        }        
+       
+        .episode-card:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        
+        .episode-number {
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4ecdc4;
+        }
+        
+        .episode-title {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .episode-duration {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .episode-type {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.5);
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        
+        .video-type {
+            color: #4ecdc4;
+        }
+        
+        .iframe-type {
+            color: #ff6b6b;
+        }
+        
+        .play-icon {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 🔹 Estilos para botones de salto en barra de Video.js */
+        .vjs-skip-back .material-icons,
+        .vjs-skip-forward .material-icons {
+            font-size: 18px;
+            line-height: 1;
+            cursor: pointer;
+            vertical-align: middle;
+        }
+
+        .vjs-control-bar .vjs-skip-back,
+        .vjs-control-bar .vjs-skip-forward {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            padding: 0;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .episodes-container { grid-template-columns: 1fr; }
+            .navigation-buttons { flex-direction: column; align-items: center; }
+            .nav-button { width: 100%; max-width: 120px; }
+        }
+        
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .video-player { margin: 0 -20px; border-radius: 0; }
+            .nav-button.prev { margin-bottom: 10px; margin-right: 10px; margin-left: 10px; }
+            .nav-button.next { margin-top: 10px; margin-left: 10px; margin-right: 10px; }
+            body { padding: 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Reproductor de Videos</h1>
+            <p class="subtitle">Administra y reproduce tus videos e iframes</p>
+        </header>
+        
+        <!-- Controles de edición -->
+        <div class="edit-controls">
+            <h3>Agregar/Editar Capítulo</h3>
+            <div class="form-group">
+                <label for="episodeTitle">Título del Capítulo</label>
+                <input type="text" id="episodeTitle" placeholder="Ingresa el título del capítulo">
+            </div>
+            <div class="form-group">
+                <label for="episodeUrl">URL del Video o Iframe</label>
+                <input type="text" id="episodeUrl" placeholder="Ingresa la URL del video o iframe">
+            </div>
+            <div class="form-group">
+                <label for="episodeType">Tipo de Contenido</label>
+                <select id="episodeType">
+                    <option value="video">Video (mp4)</option>
+                    <option value="iframe">Iframe (embed)</option>
+                </select>
+            </div>
+            <div class="form-buttons">
+                <button class="btn btn-primary" id="addEpisodeBtn">Agregar Capítulo</button>
+                <button class="btn btn-secondary" id="updateEpisodeBtn" style="display:none;">Actualizar Capítulo</button>
+                <button class="btn btn-secondary" id="cancelEditBtn" style="display:none;">Cancelar</button>
+            </div>
+        </div>
+        
+        <!-- Reproductor de video con Video.js -->
+        <div class="video-player">
+            <div class="video-controls-top">
+                <div class="video-info" id="videoDuration">Duración: --:--</div>
+            </div>
+            
+            <!-- Contenedor para video.js -->
+            <div class="video-container" id="videoContainer">
+                <video
+                    id="videoPlayer"
+                    class="video-js vjs-default-skin"
+                    controls
+                    preload="auto"
+                    playsinline
+                    data-setup="{}"
+                >
+                    <p class="vjs-no-js">
+                        Para ver este video, habilita JavaScript o usa un navegador que lo soporte.
+                    </p>
+                </video>
+            </div>
+            
+            <!-- Contenedor para iframe -->
+            <div class="iframe-container" id="iframeContainer" style="display: none;">
+                <iframe id="videoIframe" allowfullscreen></iframe>
+            </div>
+            
+            <div class="video-controls-bottom">
+                <div class="video-title" id="videoTitle">Selecciona un capítulo para reproducir</div>
+                <div class="navigation-buttons">
+                    <button class="nav-button prev" id="prevButton" disabled>
+                        <i class="fas fa-arrow-left"></i> Anterior
+                    </button>
+                    <button class="nav-button next" id="nextButton" disabled>
+                        Siguiente <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Lista de capítulos -->
+        <div class="episodes-container" id="episodesContainer">
+            <!-- Los capítulos se generarán dinámicamente -->
+        </div>
+    </div>
+
+    <!-- 🔹 Video.js JS -->
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+
+    <script>
+        // Array para almacenar los episodios
+        let EPISODES = [
+            {
+                id: 1,
+                title: "Episodio 1 - Introducción",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                type: "video"
+            },
+            {
+                id: 2,
+                title: "Episodio 2 - Desarrollo",
+                url: "https://filemoon.to/e/3m9wvqolfszm",
+                type: "iframe"
+            },
+            {
+                id: 3,
+                title: "Episodio 3 - Clímax",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                type: "video"
+            },
+            {
+                id: 4,
+                title: "Episodio 4 - Resolución",
+                url: "https://filemoon.to/e/2qty4vfkmzrk",
+                type: "iframe"
+            },
+            {
+                id: 5,
+                title: "Episodio 5 - Nuevos Horizontes",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+                type: "video"
+            },
+            {
+                id: 6,
+                title: "Episodio 6 - Desafíos",
+                url: "https://filemoon.to/e/g5fh4p53nhi8",
+                type: "iframe"
+            },
+            {
+                id: 7,
+                title: "Episodio 7 - Revelaciones",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+                type: "video"
+            },
+            {
+                id: 8,
+                title: "Episodio 8 - Confrontación",
+                url: "https://filemoon.to/e/ve7isonndj73",
+                type: "iframe"
+            },
+            {
+                id: 9,
+                title: "Episodio 9 - Transformación",
+                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+                type: "video"
+            },
+            {
+                id: 10,
+                title: "Episodio 10 - Conclusión",
+                url: "https://filemoon.to/e/6aizfzm9c83v",
+                type: "iframe"
+            }
+        ];
+
+        let currentEpisodeIndex = null;
+        let player = null;
+        let editingEpisodeId = null;
+
+        // Inicialización
+        function initApp() {
+            if (typeof videojs !== 'function') {
+                document.getElementById('videoTitle').textContent = 'Error: Video.js no cargó.';
+                generateEpisodes();
+                return;
+            }
+
+            try {
+                player = videojs('videoPlayer', {
+                    controls: true,
+                    autoplay: false,
+                    preload: 'auto',
+                    playsinline: true
+                });
+
+                player.ready(function() {
+                    createSkipButtons(player);
+                });
+
+                generateEpisodes();
+                setupEventListeners();
+            } catch (e) {
+                console.error('Error al inicializar Video.js:', e);
+                document.getElementById('videoTitle').textContent = 'No se pudo iniciar el reproductor.';
+                generateEpisodes();
+                setupEventListeners();
+            }
+        }
+
+        // Configurar event listeners para los controles de edición
+        function setupEventListeners() {
+            document.getElementById('addEpisodeBtn').addEventListener('click', addEpisode);
+            document.getElementById('updateEpisodeBtn').addEventListener('click', updateEpisode);
+            document.getElementById('cancelEditBtn').addEventListener('click', cancelEdit);
+        }
+
+        // Agregar un nuevo episodio
+        function addEpisode() {
+            const title = document.getElementById('episodeTitle').value;
+            const url = document.getElementById('episodeUrl').value;
+            const type = document.getElementById('episodeType').value;
+            
+            if (!title || !url) {
+                alert('Por favor, completa todos los campos');
+                return;
+            }
+            
+            const newEpisode = {
+                id: EPISODES.length > 0 ? Math.max(...EPISODES.map(e => e.id)) + 1 : 1,
+                title: title,
+                url: url,
+                type: type
+            };
+            
+            EPISODES.push(newEpisode);
+            generateEpisodes();
+            clearForm();
+        }
+
+        // Actualizar un episodio existente
+        function updateEpisode() {
+            if (editingEpisodeId === null) return;
+            
+            const title = document.getElementById('episodeTitle').value;
+            const url = document.getElementById('episodeUrl').value;
+            const type = document.getElementById('episodeType').value;
+            
+            if (!title || !url) {
+                alert('Por favor, completa todos los campos');
+                return;
+            }
+            
+            const episodeIndex = EPISODES.findIndex(e => e.id === editingEpisodeId);
+            if (episodeIndex !== -1) {
+                EPISODES[episodeIndex].title = title;
+                EPISODES[episodeIndex].url = url;
+                EPISODES[episodeIndex].type = type;
+            }
+            
+            generateEpisodes();
+            clearForm();
+            resetEditMode();
+        }
+
+        // Cancelar edición
+        function cancelEdit() {
+            clearForm();
+            resetEditMode();
+        }
+
+        // Limpiar formulario
+        function clearForm() {
+            document.getElementById('episodeTitle').value = '';
+            document.getElementById('episodeUrl').value = '';
+            document.getElementById('episodeType').value = 'video';
+        }
+
+        // Resetear modo de edición
+        function resetEditMode() {
+            editingEpisodeId = null;
+            document.getElementById('addEpisodeBtn').style.display = 'block';
+            document.getElementById('updateEpisodeBtn').style.display = 'none';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+        }
+
+        // Activar modo de edición
+        function activateEditMode(episodeId) {
+            const episode = EPISODES.find(e => e.id === episodeId);
+            if (!episode) return;
+            
+            editingEpisodeId = episodeId;
+            document.getElementById('episodeTitle').value = episode.title;
+            document.getElementById('episodeUrl').value = episode.url;
+            document.getElementById('episodeType').value = episode.type;
+            
+            document.getElementById('addEpisodeBtn').style.display = 'none';
+            document.getElementById('updateEpisodeBtn').style.display = 'block';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+        }
+
+        // Eliminar un episodio
+        function deleteEpisode(episodeId) {
+            if (confirm('¿Estás seguro de que quieres eliminar este capítulo?')) {
+                EPISODES = EPISODES.filter(e => e.id !== episodeId);
+                
+                // Si eliminamos el episodio actual, limpiar el reproductor
+                if (currentEpisodeIndex !== null && EPISODES[currentEpisodeIndex] && EPISODES[currentEpisodeIndex].id === episodeId) {
+                    stopCurrentPlayback();
+                    currentEpisodeIndex = null;
+                    updateNavigation();
+                }
+                
+                generateEpisodes();
+            }
+        }
+
+        // Detener la reproducción actual
+        function stopCurrentPlayback() {
+            if (player) {
+                player.pause();
+                player.src('');
+            }
+            document.getElementById('videoIframe').src = '';
+            document.getElementById('videoTitle').textContent = 'Selecciona un capítulo para reproducir';
+            document.getElementById('videoDuration').textContent = 'Duración: --:--';
+        }
+
+        // Generar la lista de episodios
+        function generateEpisodes() {
+            const container = document.getElementById('episodesContainer');
+            container.innerHTML = '';
+            
+            EPISODES.forEach((episode, index) => {
+                const episodeCard = document.createElement('div');
+                episodeCard.className = 'episode-card';
+                episodeCard.dataset.id = episode.id;
+                
+                const typeClass = episode.type === 'video' ? 'video-type' : 'iframe-type';
+                const typeText = episode.type === 'video' ? 'Video' : 'Iframe';
+                
+                episodeCard.innerHTML = `
+                    <div class="episode-number">Capítulo ${episode.id}</div>
+                    <div class="episode-title">${episode.title}</div>
+                    <div class="episode-duration">
+                        <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5,3 19,12 5,21"></polygon>
+                        </svg>
+                        Reproducir
+                    </div>
+                    <div class="episode-type ${typeClass}">${typeText}</div>
+                    <div class="episode-actions" style="margin-top: 10px; display: flex; gap: 10px;">
+                        <button class="btn btn-primary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="activateEditMode(${episode.id})">Editar</button>
+                        <button class="btn btn-secondary" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteEpisode(${episode.id})">Eliminar</button>
+                    </div>
+                `;
+                
+                episodeCard.addEventListener('click', function(e) {
+                    // Evitar que el clic en los botones de edición active la reproducción
+                    if (!e.target.closest('.episode-actions')) {
+                        playEpisode(index);
+                    }
+                });
+                
+                container.appendChild(episodeCard);
+            });
+        }
+
+        // Reproducir un episodio
+        function playEpisode(index) {
+            if (index < 0 || index >= EPISODES.length) return;
+            
+            const episode = EPISODES[index];
+            currentEpisodeIndex = index;
+            
+            if (episode.type === 'video') {
+                // Mostrar video.js y ocultar iframe
+                document.getElementById('videoContainer').style.display = 'block';
+                document.getElementById('iframeContainer').style.display = 'none';
+                document.getElementById('videoDuration').style.display = 'block';
+                
+                if (!player) return;
+                
+                const videoTitle = document.getElementById('videoTitle');
+                videoTitle.textContent = `Cargando ${episode.title}...`;
+                
+                document.getElementById('videoDuration').textContent = 'Duración: --:--';
+                
+                // Limpiar listeners anteriores
+                if (player.__onLoadedMetadata) {
+                    player.off('loadedmetadata', player.__onLoadedMetadata);
+                }
+                if (player.__onError) {
+                    player.off('error', player.__onError);
+                }
+                
+                const onLoaded = function() {
+                    onVideoReady(episode);
+                };
+                const onError = function() {
+                    videoTitle.textContent = `Error: ${episode.title} no disponible`;
+                };
+                
+                player.__onLoadedMetadata = onLoaded;
+                player.__onError = onError;
+                
+                player.one('loadedmetadata', onLoaded);
+                player.one('error', onError);
+                
+                player.src({
+                    src: episode.url,
+                    type: 'video/mp4'
+                });
+                
+                player.load();
+                player.play().catch(function(e) {
+                    console.warn("Reproducción automática fallida:", e);
+                });
+            } else {
+                // Mostrar iframe y ocultar video.js
+                document.getElementById('videoContainer').style.display = 'none';
+                document.getElementById('iframeContainer').style.display = 'block';
+                document.getElementById('videoDuration').style.display = 'none';
+                
+                const videoTitle = document.getElementById('videoTitle');
+                videoTitle.textContent = episode.title;
+                
+                const iframe = document.getElementById('videoIframe');
+                iframe.src = episode.url;
+            }
+            
+            updateNavigation();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Cuando el video está listo
+        function onVideoReady(episode) {
+            const videoTitle = document.getElementById('videoTitle');
+            const durationEl = document.getElementById('videoDuration');
+
+            videoTitle.textContent = episode.title;
+
+            if (player) {
+                const duration = player.duration();
+                if (isFinite(duration)) {
+                    const mins = Math.floor(duration / 60);
+                    const secs = Math.floor(duration % 60);
+                    durationEl.textContent = 'Duración: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
+                } else {
+                    durationEl.textContent = 'Duración: --:--';
+                }
+            }
+        }
+
+        // Actualizar navegación (botones anterior/siguiente)
+        function updateNavigation() {
+            const prevButton = document.getElementById('prevButton');
+            const nextButton = document.getElementById('nextButton');
+            
+            if (currentEpisodeIndex === null) {
+                prevButton.disabled = true;
+                nextButton.disabled = true;
+                return;
+            }
+            
+            // Botón anterior
+            if (currentEpisodeIndex > 0) {
+                prevButton.disabled = false;
+                prevButton.onclick = function() { playEpisode(currentEpisodeIndex - 1); };
+            } else {
+                prevButton.disabled = true;
+                prevButton.onclick = null;
+            }
+            
+            // Botón siguiente
+            if (currentEpisodeIndex < EPISODES.length - 1) {
+                nextButton.disabled = false;
+                nextButton.onclick = function() { playEpisode(currentEpisodeIndex + 1); };
+            } else {
+                nextButton.disabled = true;
+                nextButton.onclick = null;
+            }
+        }
+
+        // 🔹 Compatible con Tizen: sin operador ?.
+        function createSkipButtons(player) {
+            // Botón retroceder 10s
+            var skipBackBtn = player.controlBar.addChild('button', {
+                clickHandler: function() {
+                    var ct = player.currentTime();
+                    player.currentTime(Math.max(0, ct - 10));
+                }
+            });
+            skipBackBtn.el().innerHTML = '<span class="material-icons">replay_10</span>';
+            skipBackBtn.el().className += ' vjs-skip-back vjs-control vjs-button';
+            skipBackBtn.controlText('Retroceder 10 segundos');
+
+            // Botón adelantar 10s
+            var skipForwardBtn = player.controlBar.addChild('button', {
+                clickHandler: function() {
+                    var ct = player.currentTime();
+                    var duration = player.duration();
+                    if (isFinite(duration)) {
+                        player.currentTime(Math.min(duration, ct + 10));
+                    } else {
+                        player.currentTime(ct + 10);
+                    }
+                }
+            });
+            skipForwardBtn.el().innerHTML = '<span class="material-icons">forward_10</span>';
+            skipForwardBtn.el().className += ' vjs-skip-forward vjs-control vjs-button';
+            skipForwardBtn.controlText('Adelantar 10 segundos');
+
+            // 🔹 Búsqueda segura del panel de volumen (sin ?.)
+            var volumePanel = null;
+            if (player.controlBar.volumePanel && typeof player.controlBar.volumePanel.el === 'function') {
+                volumePanel = player.controlBar.volumePanel.el();
+            } else if (player.controlBar.volumeButton && typeof player.controlBar.volumeButton.el === 'function') {
+                volumePanel = player.controlBar.volumeButton.el();
+            }
+
+            if (volumePanel && volumePanel.parentNode) {
+                volumePanel.parentNode.insertBefore(skipBackBtn.el(), volumePanel);
+                volumePanel.parentNode.insertBefore(skipForwardBtn.el(), volumePanel);
+            }
+        }
+
+        // Inicializar cuando el DOM esté listo
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(initApp, 150);
+            });
+        } else {
+            setTimeout(initApp, 150);
+        }
+    </script>
+</body>
+</html>

@@ -1163,7 +1163,6 @@
 </svg>`;
 
     // --- POLYFILLS MÍNIMOS PARA TIZEN ---
-    // Polyfill para Promise.allSettled si no está disponible
     if (!Promise.allSettled) {
         Promise.allSettled = function(promises) {
             return Promise.all(promises.map(function(promise) {
@@ -1228,7 +1227,6 @@
         return count.toLocaleString();
     }
 
-    // Función para hacer peticiones HTTP compatible con Tizen
     function makeRequest(url) {
         return new Promise(function(resolve, reject) {
             var xhr = new XMLHttpRequest();
@@ -1335,7 +1333,6 @@
             })
             .catch(function(e) {
                 console.warn('Error al cargar ' + username + ':', e);
-                // Datos de respaldo si falla la API
                 return {
                     id: username,
                     name: username,
@@ -1455,24 +1452,29 @@
     function selectStream(streamer) {
         currentStreamer = streamer;
 
-        // Limpiar banner offline si existe
+        // Limpiar cualquier banner offline existente
         const offlineBanner = videoWrapper.querySelector('.offline-banner-layer');
         if (offlineBanner) {
             offlineBanner.remove();
         }
 
-        // Ocultar placeholder y botón central inmediatamente
-        videoPlaceholder.style.display = 'none';
-        if (centerPlay) centerPlay.classList.add('hide');
-
-        // Mostrar el video y restaurar estilos
+        // Restaurar completamente el reproductor
         videoPlayer.style.display = 'block';
         videoPlayer.style.opacity = "1";
         videoPlayer.style.pointerEvents = "auto";
-        
-        // Mostrar controles del reproductor
         document.querySelector('.video-controls').style.display = 'block';
         document.querySelector('.badge-container').style.display = 'flex';
+        if (centerPlay) {
+            centerPlay.style.display = 'flex';
+            centerPlay.classList.add('hide');
+        }
+
+        // Ocultar placeholder
+        videoPlaceholder.style.display = 'none';
+
+        // Restaurar dimensiones originales del videoWrapper
+        videoWrapper.style.minHeight = '';
+        videoWrapper.style.background = '';
 
         // Actualizar metadatos del stream
         channelAvatar.src = streamer.avatar;
@@ -1515,27 +1517,38 @@
     function selectOfflineStream(streamer) {
         currentStreamer = streamer;
 
-        // Detener y limpiar el video pero MANTENER el espacio
+        // Limpiar y ocultar el reproductor completamente
         videoPlayer.pause();
         videoPlayer.src = "";
         videoPlayer.load();
-        // En lugar de ocultar el video, hacerlo transparente y no interactuable
-        videoPlayer.style.opacity = "0";
-        videoPlayer.style.pointerEvents = "none";
+        videoPlayer.style.display = 'none';
 
-        // Ocultar controles y elementos del reproductor
+        // Ocultar todos los controles del reproductor
         if (centerPlay) centerPlay.style.display = "none";
         document.querySelector('.video-controls').style.display = 'none';
         document.querySelector('.badge-container').style.display = 'none';
         
-        // Asegurar que el videoWrapper mantenga su tamaño
-        videoWrapper.style.minHeight = "400px"; // Altura mínima como respaldo
-        videoWrapper.style.position = "relative"; // Asegurar contexto de posicionamiento
+        // Asegurar que el videoWrapper mantenga su aspecto 16:9
+        videoWrapper.style.minHeight = 'auto';
+        videoWrapper.style.background = '';
 
-        // Crear o actualizar el banner offline
+        // Determinar la URL del banner (siempre usar banner, nunca texto/icono)
+        let bannerUrl = "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiw4OnGhRwHDJmCXP7tagyfSm9ektmYjQGN7QaTzXQT-vVxACxKO83mFJQEiFtFJk5TmsOiWXPsrlMhyphenhyphenCMWnAfN5tS29hCrVVttEIbBsg5rx5bL8Y0D6RfK6YpKApVwM8NjvqvUqlb5pw_0B7izesbsJkob-bz7C03gEtczfndiN-Vdz6moceiFahx3sYLQ/s1600/1000007072.png"; // Default
+        
+        if (streamer.offlineBanner) {
+            if (streamer.offlineBanner.includes("/conversion/")) {
+                bannerUrl = streamer.offlineBanner
+                    .replace("/conversion/", "/responsives/")
+                    .replace("-fullsize.jpg", "___fullsize_702_395.webp");
+            } else {
+                bannerUrl = streamer.offlineBanner;
+            }
+        }
+
+        // Crear o actualizar la capa de banner
         let offlineBanner = videoWrapper.querySelector('.offline-banner-layer');
         if (!offlineBanner) {
-            offlineBanner = document.createElement('div');
+            offlineBanner = document.createElement('img');
             offlineBanner.className = 'offline-banner-layer';
             offlineBanner.style.cssText = `
                 position: absolute;
@@ -1543,38 +1556,16 @@
                 left: 0;
                 width: 100%;
                 height: 100%;
-                background: linear-gradient(135deg, var(--dark-800), var(--dark-900));
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                z-index: 20;
-                color: var(--gray-400);
-                font-size: 1.2rem;
-                text-align: center;
-                padding: 2rem;
+                object-fit: cover;
+                z-index: 10;
+                display: block;
             `;
             videoWrapper.appendChild(offlineBanner);
         }
 
-        // Contenido del banner offline
-        offlineBanner.innerHTML = `
-            <div style="margin-bottom: 1.5rem;">
-                <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 1rem; color: var(--gray-400);"></i>
-            </div>
-            <h3 style="color: var(--white); margin-bottom: 0.5rem; font-size: 1.5rem;">${streamer.name}</h3>
-            <p style="margin-bottom: 0.5rem; font-size: 1rem;">Está offline en este momento</p>
-            <p style="font-size: 0.9rem; opacity: 0.8;">Última vez en vivo: ${streamer.lastLiveText}</p>
-            <div style="margin-top: 1.5rem;">
-                <button onclick="window.open('https://kick.com/${streamer.name}', '_blank')" 
-                        style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
-                    <i class="fas fa-external-link-alt"></i> Visitar canal
-                </button>
-            </div>
-        `;
-
-        // Asegurarse de que el banner sea visible
-        offlineBanner.style.display = 'flex';
+        // Siempre establecer el banner como imagen
+        offlineBanner.src = bannerUrl;
+        offlineBanner.style.display = 'block';
 
         // Actualizar datos del streamer offline
         channelAvatar.src = streamer.avatar;
@@ -1592,7 +1583,7 @@
         document.getElementById('liveBadgeStream').style.display = 'none';
     }
 
-    // --- FUNCIONES DEL REPRODUCTOR (sin cambios) ---
+    // --- FUNCIONES DEL REPRODUCTOR ---
     function addClickHandler(element, handler) {
         element.addEventListener("click", handler);
         if ('ontouchstart' in window) {

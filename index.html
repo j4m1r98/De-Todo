@@ -1521,7 +1521,9 @@
         videoPlayer.pause();
         videoPlayer.src = "";
         videoPlayer.load();
-        videoPlayer.style.display = 'none';
+        // En lugar de ocultar el video, hacerlo transparente y no interactuable
+        videoPlayer.style.opacity = "0";
+        videoPlayer.style.pointerEvents = "none";
 
         // Ocultar todos los controles del reproductor
         if (centerPlay) centerPlay.style.display = "none";

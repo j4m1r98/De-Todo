@@ -1138,7 +1138,7 @@
     // --- CONFIGURACIÓN ---
     const TARGET_STREAMERS = ["Maryblog", "ElGlogloking", "EmetSuki", "Emikukis", "ANTONIcraTV", "MATnarok2", "Lucasta"];
     const SIMULATED_VIDEOS = {
-        "Maryblog": "https://sae13.playlist.live-video.net/v1/playlist/CvgF-rJRT2QvlwCSm6aL-B6LhLRzuKkq5T_b36Wdo3eyj2zUMMQpg7R3B0h71Pe7FYBJiWZCQ7F87DQOb-XEV5s2x3qAkX8d-5zHDjGE4q2QQEnddMiZfSvuyJ2QJx_HzS4FHKWe8iBQq3odrOnewj45hEqGuLzo7CKPyk3pDPio6iFVAy1H6yxTSRAMmQsrIo1JQSZsAhcIyKW_ZeabMWIGr71Wt2Zt2Suut7cgeCw8Y4hwhLDcgqbyt8AW799CvVEBhYOiN6n4NGvbnVn8vgTc-aUhRcI36fomi2YsdwQbdJWxK9LUjD9YkAdtrBjOZWxcZ-uuuVa82-UiBY-VXmg5HieacgkHnrnOc6frzSXvA_ImCu3iBu3BBa0L5ZUyWsb5bfj53-O14LlcePNA9HqS44OYmswRMGpF4dXSOf2IQuHvphTGaHJfNp4yL0ZHKqKwKJLNofA4r7Vt1Dmp85KYyjUhzmYFyVs1VZ_rGYFuuDYX4-2_IosaZ8dqXRFHDgjiWikKhfbrgCrLf6tMNQjRlfyVhc0TtRrGx2PZuTWfjSSQQjXvQggI-2USdJ_b0JxOCc5MoosvE2wLWyzhnWxWbHmzXdQCqxH-UZaVmQw7dndgl2eJm1h1DDHtHJ5ZJo-JduJ_FW-AY8PAn48RXZmhuCdx1ReFd2SJsvSGLcmAYQdrNw6mdgUCk2UoZqUvwHX7tN9b-cQdTWf4ao2LSFo9hKaZIUJCkqmH00BWlKnzixPqouIpbaqNxYNlKnzxADiyOyY8do8BEDWCZ5IpRdpNzlQv08F10VP5UlU-fvTm8ofAANP16i2BXO-BcIs573oeTMzhEm5JvJMadX-CKvphgIT7ZSCH6E_TsTgtwE-e3KstQjKgMCF-43B_FE7IX2DYKpVezHrNKc67E0ICR_tF0hRcjX111AD3RTPZ0e7hebPvPMZW9jsW5o3ixw1JNmW1vekWFFrB3mQvu55dYdvM6Ab_9Gc0xkhtDUYyrOeTs60rZj3sXQv9YRoMHImODW7NanRY4-coIAEqCXVzLWVhc3QtMjCuDQ.m3u8",
+        "Maryblog": "http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
         "ElGlogloking": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
         "EmetSuki": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
         "Emikukis": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
@@ -1455,16 +1455,24 @@
     function selectStream(streamer) {
         currentStreamer = streamer;
 
+        // Limpiar banner offline si existe
+        const offlineBanner = videoWrapper.querySelector('.offline-banner-layer');
+        if (offlineBanner) {
+            offlineBanner.remove();
+        }
+
         // Ocultar placeholder y botón central inmediatamente
         videoPlaceholder.style.display = 'none';
         if (centerPlay) centerPlay.classList.add('hide');
 
-        // Eliminar banner offline si existe
-        var offlineBanner = document.querySelector('.offline-banner-layer');
-        if (offlineBanner) offlineBanner.remove();
-
-        // Mostrar el video
+        // Mostrar el video y restaurar estilos
         videoPlayer.style.display = 'block';
+        videoPlayer.style.opacity = "1";
+        videoPlayer.style.pointerEvents = "auto";
+        
+        // Mostrar controles del reproductor
+        document.querySelector('.video-controls').style.display = 'block';
+        document.querySelector('.badge-container').style.display = 'flex';
 
         // Actualizar metadatos del stream
         channelAvatar.src = streamer.avatar;
@@ -1507,61 +1515,80 @@
     function selectOfflineStream(streamer) {
         currentStreamer = streamer;
 
-        // Detener y limpiar el video
+        // Detener y limpiar el video pero MANTENER el espacio
         videoPlayer.pause();
         videoPlayer.src = "";
         videoPlayer.load();
-        videoPlayer.style.display = 'none';
+        // En lugar de ocultar el video, hacerlo transparente y no interactuable
+        videoPlayer.style.opacity = "0";
+        videoPlayer.style.pointerEvents = "none";
 
-        // OCULTAR EL BOTÓN CENTRAL SIEMPRE EN OFFLINE    
+        // Ocultar controles y elementos del reproductor
         if (centerPlay) centerPlay.style.display = "none";
+        document.querySelector('.video-controls').style.display = 'none';
+        document.querySelector('.badge-container').style.display = 'none';
+        
+        // Asegurar que el videoWrapper mantenga su tamaño
+        videoWrapper.style.minHeight = "400px"; // Altura mínima como respaldo
+        videoWrapper.style.position = "relative"; // Asegurar contexto de posicionamiento
 
-        // Añadir banner offline como capa superpuesta
-        var videoContainer = document.querySelector('.video-container');
-        var defaultBanner = "https://kick.com/img/default-channel-banners/offline.webp";
-        var bannerUrl = defaultBanner;
-        if (streamer.offlineBanner) {
-            if (streamer.offlineBanner.includes("/conversion/")) {
-                bannerUrl = streamer.offlineBanner
-                    .replace("/conversion/", "/responsives/")
-                    .replace("-fullsize.jpg", "___fullsize_702_395.webp");
-            } else {
-                bannerUrl = streamer.offlineBanner;
-            }
-        }
-
-        // Crear o actualizar la capa de banner
-        var offlineBanner = videoContainer.querySelector('.offline-banner-layer');
+        // Crear o actualizar el banner offline
+        let offlineBanner = videoWrapper.querySelector('.offline-banner-layer');
         if (!offlineBanner) {
-            offlineBanner = document.createElement('img');
+            offlineBanner = document.createElement('div');
             offlineBanner.className = 'offline-banner-layer';
-            offlineBanner.style.cssText = [
-                'position: absolute;',
-                'top: 0;',
-                'left: 0;',
-                'width: 100%;',
-                'height: 100%;',
-                'object-fit: cover;',
-                'z-index: 1;'
-            ].join(' ');
-            videoContainer.appendChild(offlineBanner);
+            offlineBanner.style.cssText = `
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(135deg, var(--dark-800), var(--dark-900));
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                z-index: 20;
+                color: var(--gray-400);
+                font-size: 1.2rem;
+                text-align: center;
+                padding: 2rem;
+            `;
+            videoWrapper.appendChild(offlineBanner);
         }
-        offlineBanner.src = bannerUrl;
 
-        // Actualizar datos offline
+        // Contenido del banner offline
+        offlineBanner.innerHTML = `
+            <div style="margin-bottom: 1.5rem;">
+                <i class="fas fa-user-slash" style="font-size: 3rem; margin-bottom: 1rem; color: var(--gray-400);"></i>
+            </div>
+            <h3 style="color: var(--white); margin-bottom: 0.5rem; font-size: 1.5rem;">${streamer.name}</h3>
+            <p style="margin-bottom: 0.5rem; font-size: 1rem;">Está offline en este momento</p>
+            <p style="font-size: 0.9rem; opacity: 0.8;">Última vez en vivo: ${streamer.lastLiveText}</p>
+            <div style="margin-top: 1.5rem;">
+                <button onclick="window.open('https://kick.com/${streamer.name}', '_blank')" 
+                        style="background: var(--primary); color: white; border: none; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer;">
+                    <i class="fas fa-external-link-alt"></i> Visitar canal
+                </button>
+            </div>
+        `;
+
+        // Asegurarse de que el banner sea visible
+        offlineBanner.style.display = 'flex';
+
+        // Actualizar datos del streamer offline
         channelAvatar.src = streamer.avatar;
         channelAvatar.className = 'channel-avatar offline';
         channelName.textContent = streamer.name;
         partnerBadgeNew.style.display = streamer.isPartner ? 'flex' : 'none';
         setVerifiedBadge(streamer.isVerified);
-        streamTitleNew.textContent = formatFollowers(streamer.followers) + ' seguidores';
-        streamCategoryNew.textContent = 'Última vez en vivo ' + streamer.lastLiveText;
+        streamTitleNew.textContent = `${formatFollowers(streamer.followers)} seguidores`;
+        streamCategoryNew.textContent = `Última vez en vivo ${streamer.lastLiveText}`;
 
-        // Ocultar viewers y tags
+        // Ocultar elementos que no aplican para offline
         document.getElementById('viewersInfoContainer').style.display = 'none';
         document.querySelector('.category-section').style.marginBottom = '0';
         tagsContainer.innerHTML = '';
-
         document.getElementById('liveBadgeStream').style.display = 'none';
     }
 

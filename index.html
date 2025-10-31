@@ -2151,21 +2151,43 @@
     });
 
     addClickHandler(fullscreenBtn, function() {
-        if (!document.fullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+        if (videoWrapper.requestFullscreen) {
             videoWrapper.requestFullscreen();
-        } else {
-            document.exitFullscreen();
+        } else if (videoWrapper.webkitRequestFullscreen) {
+            videoWrapper.webkitRequestFullscreen();
+        } else if (videoWrapper.mozRequestFullScreen) {
+            videoWrapper.mozRequestFullScreen();
+        } else if (videoWrapper.msRequestFullscreen) {
+            videoWrapper.msRequestFullscreen();
         }
-        showControls();
-    });
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
+    }
+    showControls();
+});
 
-    document.addEventListener("fullscreenchange", function() {
-        fullscreenBtn.innerHTML = document.fullscreenElement
-            ? '<i class="fas fa-compress"></i>'
-            : '<i class="fas fa-expand"></i>';
-        settingsDropdown.classList.remove("active");
-        settingsOpen = false;
-    });
+    function handleFullscreenChange() {
+    var isFullscreen = document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement;
+    fullscreenBtn.innerHTML = isFullscreen
+        ? '<i class="fas fa-compress"></i>'
+        : '<i class="fas fa-expand"></i>';
+    settingsDropdown.classList.remove("active");
+    settingsOpen = false;
+}
+
+document.addEventListener("fullscreenchange", handleFullscreenChange);
+document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
+document.addEventListener("mozfullscreenchange", handleFullscreenChange);
+document.addEventListener("MSFullscreenChange", handleFullscreenChange);
 
     var settingsOpen = false;
     addClickHandler(settingsBtn, function() {

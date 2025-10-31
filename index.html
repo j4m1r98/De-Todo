@@ -817,8 +817,7 @@
             border-radius: 0.75rem;
             padding: 1rem;
             flex: 1;           
-            min-width:154px;
-            max-width: 200px;
+            min-width: calc(20% - 0.5rem);                     
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
@@ -827,6 +826,9 @@
             /* gap: 0.75rem; */ /* Eliminado para compatibilidad Tizen */
             margin-right: 1rem; /* Reemplazo de gap horizontal */
             margin-bottom: 1rem; /* Reemplazo de gap vertical */
+        }
+        .simple-tab:nth-child(5n) {
+            margin-right: 0;
         }
         .simple-tab:last-child {
             margin-right: 0; /* Eliminar margen del último tab */
@@ -1028,7 +1030,7 @@
                 margin-top: 0.5rem;
             }
             .simple-tab {
-                min-width: calc(50% - 1rem);
+                min-width: calc(50% - 0.5rem);
                 padding: 1rem;
                 margin-right: 1rem; /* Ajuste para móvil */
                 margin-bottom: 1rem; /* Ajuste para móvil */
@@ -1121,7 +1123,7 @@
                 display: none;
             }
             .simple-tab {
-                min-width: calc(50% - 1rem);
+                min-width: calc(50% - 0.5rem);
                 padding: 1rem;
                 margin-right: 1rem; /* Ajuste para móvil */
                 margin-bottom: 1rem; /* Ajuste para móvil */

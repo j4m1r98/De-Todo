@@ -192,14 +192,18 @@
 
         .center-play {
             position: absolute;
-            inset: 0;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            z-index: 15;
+            z-index: 9999; /* Z-index muy alto para Tizen */
             pointer-events: auto;
             transition: opacity 0.22s ease, transform 0.22s ease;
             opacity: 1;
+            visibility: visible !important; /* Forzar visibilidad en Tizen */
         }
 
         .center-play.hide {

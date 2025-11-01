@@ -2023,7 +2023,13 @@
         if (videoPlayer.currentTime === 0 && centerPlay) centerPlay.classList.remove("hide");
     });
 
-    if (centerPlay) centerPlay.addEventListener("click", function() { videoPlayer.play(); });
+    if (centerPlay) {
+    centerPlay.addEventListener("click", function() {        
+        if (currentStreamer && videoPlayer.src) {
+            videoPlayer.play();
+        }       
+    });
+}
 
     videoPlayer.addEventListener("loadedmetadata", function() {
         updateDetectedQuality();

@@ -11,11 +11,9 @@ button{cursor:pointer;font-weight:bold}
 main{display:flex;height:calc(100vh - 60px)}
 aside{width:240px;background:#161b22;padding:8px;overflow:auto;border-right:1px solid:#30363d}
 #messages{flex:1;padding:10px;overflow:auto;font-size:16px}
-
 .msg{display:flex;gap:6px;margin-bottom:8px;padding:6px 10px;background:#1e2630;border-radius:8px}
 .username{font-weight:bold;margin-right:6px}
 .chat-emote{height:26px;margin:0 2px;vertical-align:middle;image-rendering:pixelated}
-
 .console{font-size:10px;white-space:pre-wrap;background:#0d1117;border:1px solid:#30363d;
 padding:6px;height:100px;overflow:auto;margin-top:10px;border-radius:6px}
 footer{padding:8px;border-top:1px solid:#30363d;background:#161b22;text-align:center;font-size:12px;color:#8b949e}
@@ -24,7 +22,7 @@ footer{padding:8px;border-top:1px solid:#30363d;background:#161b22;text-align:ce
 <body>
 
 <header>
-  <input id="room" type="number" placeholder="ID sala Kick">
+  <input id="room" placeholder="Canal Kick ej: Kingteka">
   <button id="join">Unirse</button>
   <button id="clear">Limpiar</button>
 </header>
@@ -41,141 +39,236 @@ footer{padding:8px;border-top:1px solid:#30363d;background:#161b22;text-align:ce
 <footer>Kick Chat Viewer — Tizen ✅</footer>
 
 <script>
+var log = function(m){
+  var el=document.getElementById("log");
+  el.textContent += "["+new Date().toLocaleTimeString()+"] "+m+"\n";
+  el.scrollTop = el.scrollHeight;
+};
+
+var ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false");
+ws.onopen = function(){ log("✅ WebSocket Kick conectado"); };
+ws.onerror = function(){ log("❌ Error WebSocket"); };
+ws.onclose = function(e){ log("⚠️ WS cerrado: "+e.code); };
+
 var rooms = {};
 var emotes = {};
-var ws;
+var currentChannelName = "";
 
-function log(m){
-  var el = document.getElementById("log");
-  el.innerText += "[" + new Date().toLocaleTimeString() + "] " + m + "\n";
-  el.scrollTop = el.scrollHeight;
-}
-
-/* ========= Cargar emotes globales 7TV (XMLHttpRequest) ========= */
-function loadGlobal7TV(){
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://7tv.io/v3/emote-sets/global", true);
-  xhr.onreadystatechange = function(){
-    if(xhr.readyState === 4){
-      if(xhr.status === 200){
-        var d = JSON.parse(xhr.responseText);
-        for(var i=0;i<d.emotes.length;i++){
-          var e = d.emotes[i];
-          emotes[e.name] = "https:" + e.data.host.url + "/3x." + e.data.host.files[0].format;
-        }
-        log("7TV global ok");
-      }
+/* =======================
+   7TV GLOBAL
+   ======================= */
+var xhrG = new XMLHttpRequest();
+xhrG.open("GET","https://7tv.io/v3/emote-sets/global");
+xhrG.onload = function(){
+  if(xhrG.status==200){
+    var d = JSON.parse(xhrG.responseText);
+    for(var i=0;i<d.emotes.length;i++){
+      var e=d.emotes[i];
+      var url = "https:" + e.data.host.url + "/3x."+e.data.host.files[0].format;
+      emotes[e.name] = url;
     }
-  };
-  xhr.send();
-}
-loadGlobal7TV();
-
-/* ========= Cargar emotes del canal 7TV ========= */
-function loadRoom7TV(room){
-  var xhr = new XMLHttpRequest();
-  xhr.open("GET", "https://7tv.io/v3/users/kick/" + room, true);
-  xhr.onreadystatechange = function(){
-    if(xhr.readyState === 4){
-      if(xhr.status === 200){
-        var d = JSON.parse(xhr.responseText);
-        if(d.emote_set && d.emote_set.emotes){
-          var arr = d.emote_set.emotes;
-          for(var i=0;i<arr.length;i++){
-            var e = arr[i];
-            emotes[e.name] = "https:" + e.data.host.url + "/3x." + e.data.host.files[0].format;
-          }
-          log("7TV canal cargado " + room);
-        }
-      }
-    }
-  };
-  xhr.send();
-}
-
-/* ========= Color usuario ========= */
-function nameColor(name){
-  var h = 0;
-  for(var i=0;i<name.length;i++) h += name.charCodeAt(i);
-  return "hsl(" + (h%360) + ",70%,75%)";
-}
-
-/* ========= Reemplazar palabras por emotes ========= */
-function parseEmotes(text){
-  var parts = text.split(" ");
-  for(var i=0;i<parts.length;i++){
-    if(emotes[parts[i]]){
-      parts[i] = '<img class="chat-emote" src="'+emotes[parts[i]]+'">';
-    }
+    log("🌍 7TV global OK");
   }
-  return parts.join(" ");
-}
+};
+xhrG.send();
 
-/* ========= Mostrar mensaje ========= */
-function addMsg(user, text){
-  var box = document.getElementById("messages");
-  var div = document.createElement("div");
-  div.className = "msg";
-
-  var html =
-    '<span class="username" style="color:'+nameColor(user)+'">'+user+':</span>' +
-    '<span>'+parseEmotes(text)+'</span>';
-
-  div.innerHTML = html;
-  box.appendChild(div);
-  box.scrollTop = box.scrollHeight;
-}
-
-/* ========= Conectar WebSocket ========= */
-function connectWS(){
-  ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false");
-
-  ws.onopen = function(){ log("Conectado ✅"); };
-  ws.onerror = function(){ log("Error ❌"); };
-  ws.onclose = function(e){ log("Cerrado "+e.code); };
-
-  ws.onmessage = function(ev){
+/* =======================
+   7TV POR CANAL
+   ======================= */
+function load7TV(channelName){
+  var x = new XMLHttpRequest();
+  x.open("GET","https://7tv.io/v3/users/kick/"+channelName);
+  x.onload=function(){
     try{
-      var outer = JSON.parse(ev.data);
-      if(!outer.data) return;
-      var inner = JSON.parse(outer.data);
-      if(inner && inner.sender && inner.sender.username && inner.content){
-        addMsg(inner.sender.username, inner.content);
+      var d=JSON.parse(x.responseText);
+      if(d.emote_set && d.emote_set.emotes){
+        for(var i=0;i<d.emote_set.emotes.length;i++){
+          var e=d.emote_set.emotes[i];
+          var url="https:" + e.data.host.url + "/3x."+e.data.host.files[0].format;
+          emotes[e.name]=url;
+        }
+        log("🎭 7TV canal "+channelName+" OK");
       }
-    }catch(e){}
+    }catch(e){ log("⚠️ Error 7TV canal "+channelName); }
   };
-}
-connectWS();
-
-/* ========= Suscribir sala ========= */
-function subscribeRoom(id){
-  if(rooms[id]) return;
-  rooms[id] = true;
-
-  ws.send(JSON.stringify({
-    event:"pusher:subscribe",
-    data:{auth:"",channel:"chatrooms."+id+".v2"}
-  }));
-
-  loadRoom7TV(id);
-
-  var list = document.getElementById("roomsList");
-  var d = document.createElement("div");
-  d.innerText = "• " + id;
-  list.appendChild(d);
-
-  log("Entrando sala " + id);
+  x.send();
 }
 
-/* ========= Botones ========= */
-document.getElementById("join").onclick = function(){
-  var id = document.getElementById("room").value;
-  if(id) subscribeRoom(id);
+/* =======================
+   KICK EMOTES
+   ======================= */
+function loadKickEmotes(channelName){
+  var x = new XMLHttpRequest();
+  x.open("GET","https://kick.com/emotes/"+channelName);
+  x.onload = function(){
+    log("🔍 Kick emotes ruta respondio status "+x.status+" para canal "+channelName);
+    if(x.status!==200){
+      log("⚠️ Kick emotes falló para canal "+channelName);
+      return;
+    }
+    try{
+      var data = JSON.parse(x.responseText);
+      var count = 0;
+      for(var s=0; s<data.length; s++){
+        var sec = data[s];
+        if(sec.emotes && Array.isArray(sec.emotes)){
+          for(var j=0;j<sec.emotes.length;j++){
+            var e = sec.emotes[j];
+            if(e.id && e.name){
+              var url2 = "https://files.kick.com/emotes/"+e.id+"/fullsize";
+              emotes[e.name] = url2;
+              count++;
+            }
+          }
+        }
+      }
+      if(count>0){
+        log("✅ Emotes Kick cargados ("+count+") para canal "+channelName);
+      } else {
+        log("⚠️ No se encontraron emotes Kick listables para canal "+channelName);
+      }
+    }catch(err){ log("⚠️ Error parseando Kick emotes para canal "+channelName+" => "+err); }
+  };
+  x.onerror=function(){ log("❌ Error red al solicitar Kick emotes para canal "+channelName); };
+  x.send();
+}
+
+/* =======================
+   OBTENER CHATROOM ID DESDE WORKER
+   ======================= */
+function getChatroomId(channelName, callback){
+  var x = new XMLHttpRequest();
+  var url = "https://strmkckchnnl.j4m1r-98.workers.dev/?channel="+channelName;
+  x.open("GET", url);
+  x.onload=function(){
+    if(x.status==200){
+      try{
+        var d=JSON.parse(x.responseText);
+        if(d.channel_info && d.channel_info.chatroom){
+          callback(d.channel_info.chatroom);
+          return;
+        }
+      }catch(e){ log("⚠️ Error parseando Worker: "+e); }
+    }
+    log("⚠️ No se obtuvo chatroom para "+channelName);
+  };
+  x.onerror=function(){ log("❌ Error red Worker para "+channelName); };
+  x.send();
+}
+
+/* =======================
+   SUSCRIBIR SALA
+   ======================= */
+function subscribeRoomById(chatroomId){
+  if(!chatroomId) return;
+  if(!rooms[chatroomId]) rooms[chatroomId] = true;
+  updateRoomsUI();
+
+  // Esperar a que WebSocket esté abierto
+  if(ws.readyState === WebSocket.OPEN){
+    ws.send(JSON.stringify({
+      event:"pusher:subscribe",
+      data:{auth:"",channel:"chatrooms."+chatroomId+".v2"}
+    }));
+  } else {
+    ws.addEventListener("open", function onOpen(){
+      ws.removeEventListener("open", onOpen);
+      ws.send(JSON.stringify({
+        event:"pusher:subscribe",
+        data:{auth:"",channel:"chatrooms."+chatroomId+".v2"}
+      }));
+    });
+  }
+
+  load7TV(currentChannelName);
+  loadKickEmotes(currentChannelName);
+  log("📡 Sala unida "+chatroomId);
+}
+
+function joinChannel(channelName){
+  currentChannelName = channelName;
+  getChatroomId(channelName, function(chatroomId){
+    if(chatroomId){
+      subscribeRoomById(chatroomId);
+    } else {
+      log("⚠️ No se pudo unir a "+channelName);
+    }
+  });
+}
+
+function updateRoomsUI(){
+  var div=document.getElementById("roomsList");
+  div.innerHTML="";
+  for(var id in rooms){
+    var r=document.createElement("div");
+    r.textContent="• "+id;
+    div.appendChild(r);
+  }
+}
+
+/* =======================
+   PARSE EMOTES
+   ======================= */
+function parseEmotes(text){
+  // Reemplaza [emote:ID:nombre] por la URL del emote
+  return text.replace(/\[emote:\d+:(.+?)\]/g, (match, name)=>{
+    if(emotes[name]){
+      return "<img class='chat-emote' src='"+emotes[name]+"'>";
+    }
+    return name; // si no se encuentra el emote, mostrar solo el nombre
+  });
+}
+
+
+/* =======================
+   COLOR NOMBRE
+   ======================= */
+function nameColor(n){
+  var h=0;
+  for(var i=0;i<n.length;i++){h+=n.charCodeAt(i);}
+  return "hsl("+(h%360)+",70%,75%)";
+}
+
+/* =======================
+   MENSAJES WS
+   ======================= */
+ws.onmessage=function(ev){
+  try{
+    var o=JSON.parse(ev.data);
+    if(!o.data) return;
+    var d=JSON.parse(o.data);
+    if(d.sender && d.content){
+      addMsg(d.sender.username, d.content);
+    }
+  }catch(e){}
 };
 
-document.getElementById("clear").onclick = function(){
-  document.getElementById("messages").innerHTML = "";
+function addMsg(user,text){
+  var box=document.getElementById("messages");
+  var div=document.createElement("div");
+  div.className="msg";
+
+  var c=nameColor(user);
+  var parsed=parseEmotes(text);
+
+  div.innerHTML="<span class='username' style='color:"+c+"'>"+user+":</span><span>"+parsed+"</span>";
+
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
+
+/* =======================
+   BOTONES UI
+   ======================= */
+document.getElementById("join").onclick=function(){
+  var channelName = document.getElementById("room").value.trim();
+  if(channelName) joinChannel(channelName);
+};
+
+document.getElementById("clear").onclick=function(){
+  document.getElementById("messages").innerHTML="";
 };
 </script>
+
 </body>
 </html>

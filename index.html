@@ -1,849 +1,198 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reproductor de Videos</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- 🔹 Video.js CSS -->
-    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet">
-    <!-- 🔹 Material Icons -->
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Arial', sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
-        header {
-            text-align: center;            
-            padding: 20px;
-        }
-                
-        h1 {
-            font-size: 2.5rem;            
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .subtitle {
-            font-size: 1.1rem;
-            opacity: 0.8;
-            margin-top: 20px;
-            margin-bottom: 25px;
-        }
-        
-        /* Reproductor de video */
-        .video-player {
-            background: #000;
-            border-radius: 12px;
-            overflow: hidden;           
-            margin-bottom: 30px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            position: relative;
-        }
-        
-    /* PERSONALIZACIÓN DE REPRODUCTOR DE 
-VIDEOJS ESTILO YOUTUBE */
+<meta charset="utf-8">
+<title>Kick Chat Viewer</title>
+<style>
+body{font-family:Arial;background:#0d1117;color:#e6edf3;margin:0}
+header{padding:12px;background:#161b22;border-bottom:1px solid:#30363d;display:flex;gap:12px;align-items:center}
+input,button{padding:8px;border-radius:6px;border:1px solid:#30363d;background:#0d1117;color:#e6edf3}
+button{cursor:pointer;font-weight:bold}
+main{display:flex;height:calc(100vh - 60px)}
+aside{width:260px;background:#161b22;padding:10px;overflow:auto;border-right:1px solid:#30363d}
+#messages{flex:1;padding:10px;overflow:auto}
 
-    .video-js {            
-      outline: none;
-      -webkit-tap-highlight-color: transparent;
-    }
+/* Mensajes estilo burbuja */
+.msg{
+  display:flex;
+  gap:6px;
+  align-items:flex-start;
+  margin-bottom:8px;
+  padding:8px 12px;
+  background:#1e2630;
+  border-radius:10px;
+  font-size:15px;
+  line-height:1.35;
+  animation:fadeIn .15s ease-out;
+}
 
-    /* 1. Botón central circular como YouTube */
-    .video-js .vjs-big-play-button {
-      border-radius: 50% !important;
-      background-color: rgba(0, 0, 0, 0.7) !important;
-      border: none !important;
-      width: 80px !important;
-      height: 80px !important;
-      font-size: 50px;
-      margin-left: 0px !important;
-      margin-top: 0px !important;
-      line-height: 80px !important;
-      left: 50% !important;
-      top: 50% !important;
-      transform: translate(-50%, -50%) !important;    
-    }
-    
-    /* 2. Barra de controles con gradiente */
-    .video-js .vjs-control-bar {
-      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%) !important; 
-      border: none !important;     
-    }
-    
-    /* 3. Barra de progreso arriba de los controles y color rojo */
-    .video-js .vjs-progress-control {
-      position: absolute;
-      top: -7px;
-      width: 100%;
-      height: 10px;
-    }
-    
-    .video-js .vjs-play-progress {
-      background-color: #ff0000 !important;
-    }
-    
-    .video-js .vjs-play-progress:before {
-      color: #ff0000 !important;
-    }
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
-    .video-js .vjs-play-progress .vjs-time-tooltip {
-      display: block !important;
-      background-color: rgba(0, 0, 0, 0.8);
-      color: #fff;  
-      font-size: 1em;
-      padding: 6px 8px 6px 8px;
-    }
+/* Usuario */
+.username{
+  font-weight:bold;
+  margin-right:6px;
+}
 
-    .video-js .vjs-mouse-display .vjs-time-tooltip {
-       display: none !important;
-    }
+/* Emotes */
+.chat-emote{
+  height:28px;
+  vertical-align:middle;
+  margin:0 2px;
+  image-rendering:pixelated;
+}
 
-    .video-js .vjs-mouse-display {
-      display: none !important;
-    }
-     
-    /* 4. Ocultar el tiempo restante */
-    .vjs-remaining-time {
-      display: none !important;
-    }
-
-    /* 5. Asegurar que los otros controles de tiempo sean visibles */
-    .vjs-current-time,
-    .vjs-duration,
-    .vjs-time-divider {
-      display: block !important;
-      font-size: 12px;
-      font-weight: 600;
-    }
-    
-    /* 6. Espaciador central que empuja los controles a los lados */
-    .vjs-spacer {
-      flex-grow: 1;
-    }
-
-    /* 7. CORRECCIÓN: Reducir el espaciado entre los elementos de tiempo */
-    .video-js .vjs-time-control {
-      padding: 0 3px !important; 
-      min-width: auto !important;
-    }
-    
-    .video-js .vjs-time-divider {
-      padding: 0 2px !important; 
-      min-width: auto !important;
-    }
-    
-    /* 8. Asegurar que los controles de tiempo estén juntos */
-    .vjs-current-time,
-    .vjs-time-divider,
-    .vjs-duration {
-      margin: 0 !important;
-    }
-
-    .video-js .vjs-current-time {
-      padding-left: 12px !important;
-    }
-    
-    /* 9. Eliminar bordes de todos los botones en la barra de controles */
-    .video-js .vjs-control-bar .vjs-button {
-      outline: none !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-    
-    /* 10. Eliminar bordes en estado focus */
-    .video-js .vjs-control-bar .vjs-button:focus {
-      outline: none !important;
-      border: none !important;
-      box-shadow: none !important;
-    }
-
-        .video-controls-top {
-            background: rgba(0,0,0,0.8);
-            padding: 15px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        
-        .player-container {
-            position: relative;
-            width: 100%;            
-            height: 0;
-            padding-bottom: 56.25%; /* 16:9 */
-        }
-        
-        #playerWrapper {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-        
-        .video-controls-bottom {
-            background: rgba(0,0,0,0.8);
-            padding: 20px;
-            text-align: center;
-        }
-        
-        .video-title {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #4ecdc4;
-        }
-        
-        .navigation-buttons {
-            display: flex;
-            justify-content: center;           
-            margin-top: 10px;
-        }
-        
-        .nav-button {
-            background: rgba(255,255,255,0.1);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            padding: 10px 20px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: bold;
-            display: flex;
-            margin: 0 10px;
-            align-items: center;            
-            min-width: 120px;
-        }
-        
-        .nav-button:hover {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-        
-        .nav-button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .nav-button.prev {
-            border-color: #ff6b6b;
-            color: white;
-        }
-        
-        .nav-button.next {
-            border-color: #4ecdc4;
-            color: white;
-        }
-        
-        /* Lista de capítulos */
-        .episodes-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            margin-top: 20px;
-        }
-        
-        .episode-card {
-            background: rgba(255,255,255,0.08);
-            border-radius: 12px;
-            padding: 20px;
-            margin: 10px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 1px solid rgba(255,255,255,0.1);
-            position: relative;
-        }        
-       
-        .episode-card:hover {
-            background: rgba(255,255,255,0.15);
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-        }
-        
-        .episode-number {
-            font-size: 1.3rem;
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #4ecdc4;
-        }
-        
-        .episode-title {
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-        
-        .episode-duration {
-            font-size: 0.9rem;
-            opacity: 0.7;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .episode-type {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.5);
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-        }
-        
-        .video-type {
-            color: #4ecdc4;
-        }
-        
-        .iframe-type {
-            color: #ff6b6b;
-        }
-        
-        .play-icon {
-            width: 16px;
-            height: 16px;
-        }
-
-        /* 🔹 Estilos para botones de salto en barra de Video.js */
-        .vjs-skip-back .material-icons,
-        .vjs-skip-forward .material-icons {
-            font-size: 18px;
-            line-height: 1;
-            cursor: pointer;
-            vertical-align: middle;
-        }
-
-        .vjs-control-bar .vjs-skip-back,
-        .vjs-control-bar .vjs-skip-forward {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            width: 34px;
-            padding: 0;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            h1 { font-size: 2rem; }
-            .episodes-container { grid-template-columns: 1fr; }
-            .navigation-buttons { flex-direction: column; align-items: center; }
-            .nav-button { width: 100%; max-width: 120px; }
-        }
-        
-        @media (max-width: 480px) {
-            h1 { font-size: 1.8rem; }
-            .video-player { margin: 0 -10px; border-radius: 0; }
-            .nav-button.prev { margin-bottom: 10px; margin-right: 10px; margin-left: 10px; }
-            .nav-button.next { margin-top: 10px; margin-left: 10px; margin-right: 10px; }
-            body { padding: 10px; }
-        }
-    </style>
+.console{
+  font-size:11px;white-space:pre-wrap;background:#0d1117;border:1px solid:#30363d;
+  padding:6px;height:120px;overflow:auto;margin-top:10px;border-radius:6px
+}
+footer{padding:10px;border-top:1px solid:#30363d;background:#161b22;text-align:center;font-size:12px;color:#8b949e}
+</style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Reproductor de Videos</h1>
-            <p class="subtitle">Reproduce tus videos e iframes favoritos</p>
-        </header>
-        
-        <!-- Reproductor de video -->
-        <div class="video-player">
-            <div class="video-controls-top">
-                <div class="video-info" id="videoDuration">Duración: --:--</div>
-            </div>
-            
-            <!-- Contenedor dinámico para video/iframe -->
-            <div class="player-container">
-                <div id="playerWrapper">
-                    <!-- Video.js se inicializará aquí dinámicamente -->
-                </div>
-            </div>
-            
-            <div class="video-controls-bottom">
-                <div class="video-title" id="videoTitle">Selecciona un capítulo para reproducir</div>
-                <div class="navigation-buttons">
-                    <button class="nav-button prev" id="prevButton" disabled>
-                        <i class="fas fa-arrow-left"></i> Anterior
-                    </button>
-                    <button class="nav-button next" id="nextButton" disabled>
-                        Siguiente <i class="fas fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Lista de capítulos -->
-        <div class="episodes-container" id="episodesContainer">
-            <!-- Los capítulos se generarán dinámicamente -->
-        </div>
-    </div>
 
-    <!-- 🔹 Video.js JS -->
-    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+<header>
+  <input id="room" type="number" placeholder="ID sala Kick ej: 4598">
+  <button id="join">Unirse</button>
+  <button id="clear">Limpiar chat</button>
+</header>
 
-    <script>
-        // ==============================================
-        // EDITAR AQUÍ: AGREGAR/EDITAR VIDEOS E IFRAMES
-        // ==============================================
-        
-        // Array para almacenar los episodios
-        // Modifica este array para agregar, editar o eliminar videos e iframes
-        let EPISODES = [
-            {
-                id: 1,
-                title: "Episodio 1 - Introducción",
-                url: "https://sae11.playlist.live-video.net/v1/playlist/CvoFfC0oMUyIxMqeHDBcVYoIrbet9S4A7nKi7s33RZVZb0OJv3ORf0v9J25bryGbTLNNK2Q4XkngTNq1OpVfgwgZCNpERPRS2sja8DgIllOGEUnSXDdv1U6XwhRUVN1hchNl9B_aOKP1ecutuwlFPU2fXZgfSNwIFCUI9LqnYbPKew6ROUtTtQ9FJDHRQIqzPjJ3xB5njZVI6v0rYkzgKibacabAT2uZs_it21crEoEeWkvH0WeYxtR51GM--mMAMjUFDKi7h6sj58p07HdM4mYUsWAoMOSV5mkanOmasfQz3imKzIj4JCwQ9k2JuXsUm2SDdQc1xQg3fHgspvFkoyAmlFHeONztal-RKkpJAfjHOmJ4kDlwNQ2-aFT-mm3kpsCQqE2hheX7JIIrKW-vmtOn6Y2xCRTkSVLFF5hIBZUYlNEfIfa4_1T1ojIlwL0xzZcxdwS39HaTVEaiCUnHNbb-xOFXf2N-zc_yOU52GVz4jqHU7xbMGaxjslHRkND4ZyMTkrfTI7YMmk8ZxmP_M4gOywJ_gFp2qaDGuN7-HbfrsunrWwmDhzAiEeJB7LCRDORH3Cu2luzzhbCoHBEPe2wjZsldvixONuUXeEVrOV3A2eO-auBfEewkIIK9jSoit1mb7terS0H17jZIXhmey9fkV678Y7Q_JQjkvfPjZ7sEFf6DG6zU-s10SStfYrbCDfL5_F6leJZLc4mvk5jrBc_iBuUG_3igWHMJZQszQLTeoKHKzbL0iHgKA2d3BbMvVAa0oqsnT0x2D-39c2asxvC8nbcygDJLOfCySWIUAyo9tDwTWMI9mldHrCspOLAq11XFajxtU1DZc--TrTBD3yB7vmTsCWj-48ct9AwZZmy7SJdxlgS79gAxnlbaaB7YiEFoXzL4GtFoOs3f2Mxf3Clc9PbmA01ulgGDhxUz0aMTYh3mM3x19TGA1SyZRu0l6vszrCUwc3PrRP7YZYn8RHXJo5APrFRN_Sl69hWTQqffpPGisjDQTNRw-GTvGgyXv1_tL_4oqmS5Xf8gASoJdXMtZWFzdC0yMNIN.m3u8",
-                type: "video"
-            },
-            {
-                id: 2,
-                title: "Episodio 2 - Desarrollo",
-                url: "https://kicktools.app/fusion_chat/fusion-chat.html?kick=Kingteka&twitch=&font=Inter&fontSize=Large&fontShadow=shadow-na&fontColor=%23ffffff&theme=custom&fontCase=none&timestamp=on&platformBadges=on&userBadges=on&bots=on&highlight=on&fade=on&fadeTime=30%E2%9C%96",
-                type: "iframe"
-            },
-            {
-                id: 3,
-                title: "Episodio 3 - Clímax",
-                url: "https://procsyurlstrm.j4m1r-98.workers.dev/?url=https://fa723fc1b171.us-west-2.playback.live-video.net/api/video/v1/us-west-2.196233775518.channel.hicpxTmfPcL5.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCJ9.eyJhd3M6Y2hhbm5lbC1hcm4iOiJhcm46YXdzOml2czp1cy13ZXN0LTI6MTk2MjMzNzc1NTE4OmNoYW5uZWwvaGljcHhUbWZQY0w1IiwiYXdzOmFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6Imh0dHBzOi8va2ljay5jb20saHR0cHM6Ly93d3cuZ3N0YXRpYy5jb20saHR0cHM6Ly8qLmtpY2subGl2ZSxodHRwczovL3BsYXllci5raWNrLmNvbSxodHRwczovL2FkbWluLmtpY2suY29tLGh0dHBzOi8vYmV0YS5raWNrLmNvbSxodHRwczovL25leHQua2ljay5jb20saHR0cHM6Ly9kYXNoYm9hcmQua2ljay5jb20saHR0cHM6Ly8qLnByZXZpZXcua2ljay5jb20saHR0cHM6Ly94Ym94LmtpY2suY29tLGh0dHBzOi8vcGxheXN0YXRpb24ua2ljay5jb20iLCJhd3M6c3RyaWN0LW9yaWdpbi1lbmZvcmNlbWVudCI6ZmFsc2UsImV4cCI6MTc2MjQ4MTA5OH0.2_LzBxrj3r1VDwtEczXDcaDggi_hvCPA5aDcL8wIePSJuy23kLRWBAqmH2Wx5XsRq4D-UHXM7wGKeRtEnvG8GEcU1u5cjaxut-pkxUhnjQY-X3QgYusEB5DDmVNH10Vw",
-                type: "video"
-            },
-            {
-                id: 4,
-                title: "Episodio 4 - Resolución",
-                url: "https://chat-overlay.matinaniss.com/?channel=xqc&sevenTVCosmeticsEnabled=true&sevenTVEmotesEnabled=true&theme=dark&textShadow=small&textSize=medium&animation=none&showPinEnabled=false&textBackgroundEnabled=true",
-                type: "iframe"
-            },
-            {
-                id: 5,
-                title: "Episodio 5 - Nuevos Horizontes",
-                url: "https://fa723fc1b171.us-west-2.playback.live-video.net/api/video/v1/us-west-2.196233775518.channel.hicpxTmfPcL5.m3u8?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJFUzM4NCJ9.eyJhd3M6Y2hhbm5lbC1hcm4iOiJhcm46YXdzOml2czp1cy13ZXN0LTI6MTk2MjMzNzc1NTE4OmNoYW5uZWwvaGljcHhUbWZQY0w1IiwiYXdzOmFjY2Vzcy1jb250cm9sLWFsbG93LW9yaWdpbiI6Imh0dHBzOi8va2ljay5jb20saHR0cHM6Ly93d3cuZ3N0YXRpYy5jb20saHR0cHM6Ly8qLmtpY2subGl2ZSxodHRwczovL3BsYXllci5raWNrLmNvbSxodHRwczovL2FkbWluLmtpY2suY29tLGh0dHBzOi8vYmV0YS5raWNrLmNvbSxodHRwczovL25leHQua2ljay5jb20saHR0cHM6Ly9kYXNoYm9hcmQua2ljay5jb20saHR0cHM6Ly8qLnByZXZpZXcua2ljay5jb20saHR0cHM6Ly94Ym94LmtpY2suY29tLGh0dHBzOi8vcGxheXN0YXRpb24ua2ljay5jb20iLCJhd3M6c3RyaWN0LW9yaWdpbi1lbmZvcmNlbWVudCI6ZmFsc2UsImV4cCI6MTc2MjQ4MTA5OH0.2_LzBxrj3r1VDwtEczXDcaDggi_hvCPA5aDcL8wIePSJuy23kLRWBAqmH2Wx5XsRq4D-UHXM7wGKeRtEnvG8GEcU1u5cjaxut-pkxUhnjQY-X3QgYusEB5DDmVNH10Vw",
-                type: "video"
-            },
-            {
-                id: 6,
-                title: "Episodio 6 - Desafíos",
-                url: "https://kick-chat.corard.tv/v1/chat?user=Kingteka&font-size=Small&stroke=Medium&animate=true&badges=true&commands=true&bots=true",
-                type: "iframe"
-            },
-            {
-                id: 7,
-                title: "Episodio 7 - Revelaciones",
-                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                type: "video"
-            },
-            {
-                id: 8,
-                title: "Episodio 8 - Confrontación",
-                url: "https://chat-overlay.matinaniss.com/?channel=Kingteka&sevenTVCosmeticsEnabled=true&sevenTVEmotesEnabled=true&theme=dark&textShadow=small&textSize=medium&animation=none&showPinEnabled=true&textBackgroundEnabled=false&textBackgroundWidth=min",
-                type: "iframe"
-            },
-            {
-                id: 9,
-                title: "Episodio 9 - Transformación",
-                url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
-                type: "video"
-            },
-            {
-                id: 10,
-                title: "Episodio 10 - Conclusión",
-                url: "https://chat-overlay.matinaniss.com/?channel=Kingteka",
-                type: "iframe"
-            }
-        ];
+<main>
+  <aside>
+    <h4>Salas activas</h4>
+    <div id="roomsList"></div>
+    <div class="console" id="log"></div>
+  </aside>
+  <div id="messages"></div>
+</main>
 
-        // ==============================================
-        // NO EDITAR A PARTIR DE AQUÍ
-        // ==============================================
+<footer>Kick WebSocket Viewer — Solo lectura ✅</footer>
 
-        let currentEpisodeIndex = null;
-        let player = null;
+<script>
+const log = m=>{
+  const el=document.getElementById("log");
+  el.textContent+=`[${new Date().toLocaleTimeString()}] ${m}\n`;
+  el.scrollTop=el.scrollHeight;
+};
 
-        // Función para destruir el reproductor de forma segura
-        function safeDisposePlayer(playerId) {
-            if (player) {
-                try {
-                    player.dispose();
-                    player = null;
-                } catch (e) {
-                    console.warn("Error al destruir el reproductor:", e);
-                }
-            }
-            
-            // También intentamos eliminar por ID por si acaso
-            const existingPlayer = videojs.getPlayer(playerId);
-            if (existingPlayer) {
-                try {
-                    existingPlayer.dispose();
-                } catch (e) {
-                    console.warn("Error al destruir reproductor por ID:", e);
-                }
-            }
-        }
+const ws=new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false");
+ws.onopen = ()=>log("✅ Conectado a Kick WebSocket");
+ws.onerror = ()=>log("❌ Error");
+ws.onclose = e=>log("⚠️ Desconectado: "+e.code);
 
-        // Inicializar Video.js vacío
-        function initEmptyVideoPlayer() {
-            const container = document.getElementById('playerWrapper');
-            
-            // Limpiar contenedor completamente
-            container.innerHTML = '';
-            
-            // Crear elemento video desde cero
-            const video = document.createElement('video');
-            video.id = 'videoPlayer';
-            video.className = 'video-js vjs-default-skin';
-            video.controls = true;
-            video.preload = 'auto';
-            video.setAttribute('playsinline', '');
-            container.appendChild(video);
-            
-            // Inicializar Video.js
-            try {
-                player = videojs('videoPlayer', {
-                    controls: true,
-                    autoplay: false,
-                    preload: 'auto',
-                    playsinline: true,
-                    fluid: true
-                });
-                
-                player.ready(function() {
-                    createSkipButtons(player);
-                });
-            } catch (e) {
-                console.error('Error iniciando Video.js:', e);
-            }
-        }
+const rooms=new Set();
+let emotes={};
 
-        // Mostrar estado vacío del reproductor
-        function showEmptyPlayer() {
-            const videoDuration = document.getElementById('videoDuration');
-            const videoTitle = document.getElementById('videoTitle');
-            
-            safeDisposePlayer("videoPlayer");
-            initEmptyVideoPlayer();
-            
-            videoDuration.textContent = 'Duración: --:--';
-            videoTitle.textContent = 'Selecciona un capítulo para reproducir';
-            
-            // Deshabilitar navegación
-            document.getElementById('prevButton').disabled = true;
-            document.getElementById('nextButton').disabled = true;
-        }
+/* =======================
+   7TV EMOTES GLOBAL
+   ======================= */
 
-        // Inicialización
-        function initApp() {
-            generateEpisodes();
-            
-            /* === Detectar si es nueva pestaña (no recarga) === */
-            if (!sessionStorage.getItem("paginaActiva")) {
-                // Es una nueva pestaña, no cargamos el último episodio
-                sessionStorage.setItem("paginaActiva", "1");
-                
-                // Mostrar reproductor vacío
-                showEmptyPlayer();
-            } else {
-                // No es nueva pestaña, verificamos si hay episodio guardado
-                const ultimoGuardado = localStorage.getItem("ultimoEpisodio");
-                
-                if (ultimoGuardado !== null) {
-                    const indiceACargar = Number(ultimoGuardado);
-                    
-                    // Verificar que el índice sea válido
-                    if (indiceACargar >= 0 && indiceACargar < EPISODES.length) {
-                        playEpisode(indiceACargar);
-                    } else {
-                        // Índice inválido, mostrar reproductor vacío
-                        showEmptyPlayer();
-                    }
-                } else {
-                    // No hay episodio guardado, mostrar reproductor vacío
-                    showEmptyPlayer();
-                }
-            }
-        }
+fetch("https://7tv.io/v3/emote-sets/global")
+  .then(r=>r.json())
+  .then(d=>{
+    for(const e of d.emotes){
+      const url = e.data.host.url + `/3x.${e.data.host.files[0].format}`;
+      emotes[e.name] = "https:" + url;
+    }
+    log("🌍 Emotes globales 7TV listos");
+  });
 
-        // Generar la lista de episodios
-        function generateEpisodes() {
-            const container = document.getElementById('episodesContainer');
-            container.innerHTML = '';
-            
-            EPISODES.forEach((episode, index) => {
-                const episodeCard = document.createElement('div');
-                episodeCard.className = 'episode-card';
-                episodeCard.dataset.id = episode.id;
-                
-                const typeClass = episode.type === 'video' ? 'video-type' : 'iframe-type';
-                const typeText = episode.type === 'video' ? 'Video' : 'Iframe';
-                
-                episodeCard.innerHTML = `
-                    <div class="episode-number">Capítulo ${episode.id}</div>
-                    <div class="episode-title">${episode.title}</div>
-                    <div class="episode-duration">
-                        <svg class="play-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="5,3 19,12 5,21"></polygon>
-                        </svg>
-                        Reproducir
-                    </div>
-                    <div class="episode-type ${typeClass}">${typeText}</div>
-                `;
-                
-                episodeCard.addEventListener('click', function() {
-                    playEpisode(index);
-                });
-                
-                container.appendChild(episodeCard);
-            });
-        }
+/* =======================
+   7TV EMOTES POR CANAL KICK
+   ======================= */
+async function loadRoomEmotes(room){
+  try{
+    const res = await fetch(`https://7tv.io/v3/users/kick/${room}`);
+    const data = await res.json();
 
-        // Reproducir un episodio
-        function playEpisode(index) {
-            if (index < 0 || index >= EPISODES.length) return;
-            
-            const episode = EPISODES[index];
-            currentEpisodeIndex = index;
-            
-            // Guardar el último episodio visto en localStorage
-            localStorage.setItem("ultimoEpisodio", index.toString());
-            
-            const container = document.getElementById('playerWrapper');
-            const videoTitle = document.getElementById('videoTitle');
-            const videoDuration = document.getElementById('videoDuration');
-            
-            // Actualizar título
-            videoTitle.textContent = episode.title;
-            
-            // Destruir player anterior y limpiar contenedor
-            safeDisposePlayer("videoPlayer");
-            container.innerHTML = "";
+    if(data.emote_set?.emotes){
+      data.emote_set.emotes.forEach(e=>{
+        const url = e.data.host.url + `/3x.${e.data.host.files[0].format}`;
+        emotes[e.name] = "https:" + url;
+      });
+      log(`🎭 Emotes cargados para sala ${room}`);
+    } else {
+      log(`⚠️ No hay emotes 7TV en sala ${room}`);
+    }
+  }catch{
+    log("⚠️ Error cargando emotes 7TV");
+  }
+}
 
-            // Crear el elemento de video o iframe
-            if (episode.type === "iframe") {
-                videoDuration.textContent = 'Reproduciendo...';
-                
-                const iframe = document.createElement("iframe");
-                iframe.src = episode.url;
-                iframe.allowFullscreen = true;
-                iframe.frameBorder = 0;
-                // Agregar atributo para permitir autoplay
-                iframe.setAttribute("allow", "autoplay; encrypted-media");
-                Object.assign(iframe.style, { 
-                    position:"absolute", 
-                    top:0, 
-                    left:0, 
-                    width:"100%", 
-                    height:"100%" 
-                });
-                container.appendChild(iframe);
+function subscribeRoom(id){
+  if(rooms.has(id)) return;
+  rooms.add(id);
+  updateRoomsUI();
 
-            } else if (episode.type === "video") {
-                videoDuration.textContent = 'Cargando...';
-                
-                const video = document.createElement("video");
-                video.className = "video-js vjs-default-skin";
-                video.id = "videoPlayer";
-                video.controls = true;
-                video.preload = "auto";
-                video.setAttribute("playsinline", "");
-                
-                const source = document.createElement("source");
-                source.src = episode.url;
-                source.type = "video/mp4";
-                video.appendChild(source);
-                
-                Object.assign(video.style, { 
-                    position:"absolute", 
-                    top:0, 
-                    left:0, 
-                    width:"100%", 
-                    height:"100%" 
-                });
-                container.appendChild(video);
+  ws.send(JSON.stringify({
+    event:"pusher:subscribe",
+    data:{auth:"",channel:`chatrooms.${id}.v2`}
+  }));
 
-                // Esperamos un tick del navegador para que el DOM se estabilice
-                requestAnimationFrame(() => {
-                    // Si videojs no está disponible, mostramos mensaje claro
-                    if (typeof videojs !== 'function') {
-                        container.innerHTML = `<div style="color:white;padding:18px;text-align:center;">Video.js no está disponible. Revisa la consola o comprueba la conexión CDN.</div>`;
-                        return;
-                    }
+  loadRoomEmotes(id);
+  log(`📡 Suscrito a sala ${id}`);
+}
 
-                    try {
-                        player = videojs("videoPlayer", {
-                            controls: true,
-                            autoplay: true,  // AUTOPLAY HABILITADO
-                            preload: "auto",
-                            playsinline: true,
-                            fluid: true
-                        });
+function updateRoomsUI(){
+  const div=document.getElementById("roomsList");
+  div.innerHTML="";
+  rooms.forEach(id=>{
+    const r=document.createElement("div");
+    r.textContent=`• ${id}`;
+    div.appendChild(r);
+  });
+}
 
-                        // Agregar botones de salto
-                        player.ready(function() {
-                            createSkipButtons(player);
-                            
-                            // Configurar eventos para obtener duración
-                            player.on('loadedmetadata', function() {
-                                onVideoReady(episode);
-                            });
-                            
-                            player.on('error', function() {
-                                videoTitle.textContent = `Error: ${episode.title} no disponible`;
-                                videoDuration.textContent = 'Error al cargar';
-                            });
-                        });
+/* Reemplazar texto por emote si existe */
+function parseEmotes(text){
+  return text.split(" ").map(w =>
+    emotes[w] ? `<img class="chat-emote" src="${emotes[w]}">` : w
+  ).join(" ");
+}
 
-                    } catch (e) {
-                        console.error("Error iniciando Video.js:", e);
-                        container.innerHTML = `<div style="color:white;padding:18px;text-align:center;">No se pudo inicializar el reproductor.</div>`;
-                    }
-                });
-            }
-            
-            updateNavigation();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+/* Color según nombre usuario */
+function nameColor(name){
+  const hash=[...name].reduce((a,c)=>a+c.charCodeAt(0),0);
+  const hue=hash % 360;
+  return `hsl(${hue},70%,75%)`;
+}
 
-        // Cuando el video está listo
-        function onVideoReady(episode) {
-            const videoTitle = document.getElementById('videoTitle');
-            const durationEl = document.getElementById('videoDuration');
+ws.onmessage = ev=>{
+  try{
+    const outer=JSON.parse(ev.data);
+    if(!outer.data) return;
+    const inner=JSON.parse(outer.data);
+    if(inner?.sender?.username && inner?.content){
+      addMsg(inner.sender.username, inner.content);
+    }
+  }catch{}
+};
 
-            videoTitle.textContent = episode.title;
+function addMsg(user,text){
+  const box=document.getElementById("messages");
+  const div=document.createElement("div");
+  div.className="msg";
 
-            if (player) {
-                const duration = player.duration();
-                if (isFinite(duration)) {
-                    const mins = Math.floor(duration / 60);
-                    const secs = Math.floor(duration % 60);
-                    durationEl.textContent = 'Duración: ' + mins + ':' + (secs < 10 ? '0' : '') + secs;
-                } else {
-                    durationEl.textContent = 'Reproduciendo...';
-                }
-            }
-        }
+  const color=nameColor(user);
+  const parsed=parseEmotes(text);
 
-        // Actualizar navegación (botones anterior/siguiente)
-        function updateNavigation() {
-            const prevButton = document.getElementById('prevButton');
-            const nextButton = document.getElementById('nextButton');
-            
-            if (currentEpisodeIndex === null) {
-                prevButton.disabled = true;
-                nextButton.disabled = true;
-                return;
-            }
-            
-            // Botón anterior
-            if (currentEpisodeIndex > 0) {
-                prevButton.disabled = false;
-                prevButton.onclick = function() { playEpisode(currentEpisodeIndex - 1); };
-            } else {
-                prevButton.disabled = true;
-                prevButton.onclick = null;
-            }
-            
-            // Botón siguiente
-            if (currentEpisodeIndex < EPISODES.length - 1) {
-                nextButton.disabled = false;
-                nextButton.onclick = function() { playEpisode(currentEpisodeIndex + 1); };
-            } else {
-                nextButton.disabled = true;
-                nextButton.onclick = null;
-            }
-        }
+  div.innerHTML = `
+    <span class="username" style="color:${color}">${user}:</span>
+    <span>${parsed}</span>
+  `;
 
-                // 🔹 Compatible con Tizen: sin operador ?.
-        function createSkipButtons(player) {
-            // Botón retroceder 10s
-            var skipBackBtn = player.controlBar.addChild('button', {
-                clickHandler: function() {
-                    var ct = player.currentTime();
-                    player.currentTime(Math.max(0, ct - 10));
-                }
-            });
-            skipBackBtn.el().innerHTML = '<span class="material-icons">replay_10</span>';
-            skipBackBtn.el().className += ' vjs-skip-back vjs-control vjs-button';
-            skipBackBtn.controlText('Retroceder 10 segundos');
+  box.appendChild(div);
+  box.scrollTop=box.scrollHeight;
+}
 
-            // Botón adelantar 10s
-            var skipForwardBtn = player.controlBar.addChild('button', {
-                clickHandler: function() {
-                    var ct = player.currentTime();
-                    var duration = player.duration();
-                    if (isFinite(duration)) {
-                        player.currentTime(Math.min(duration, ct + 10));
-                    } else {
-                        player.currentTime(ct + 10);
-                    }
-                }
-            });
-            skipForwardBtn.el().innerHTML = '<span class="material-icons">forward_10</span>';
-            skipForwardBtn.el().className += ' vjs-skip-forward vjs-control vjs-button';
-            skipForwardBtn.controlText('Adelantar 10 segundos');
+document.getElementById("join").onclick=()=>{
+  const id=document.getElementById("room").value;
+  if(id) subscribeRoom(id);
+};
 
-            // 🔹 Búsqueda segura del panel de volumen (sin ?.)
-            var volumePanel = null;
-            if (player.controlBar.volumePanel && typeof player.controlBar.volumePanel.el === 'function') {
-                volumePanel = player.controlBar.volumePanel.el();
-            } else if (player.controlBar.volumeButton && typeof player.controlBar.volumeButton.el === 'function') {
-                volumePanel = player.controlBar.volumeButton.el();
-            }
-
-            if (volumePanel && volumePanel.parentNode) {
-                volumePanel.parentNode.insertBefore(skipBackBtn.el(), volumePanel);
-                volumePanel.parentNode.insertBefore(skipForwardBtn.el(), volumePanel);
-            }
-           
-            // AGREGAR FRAGMENTO ESPACIADOR DESPUÉS DEL TIEMPO
-
-            var controlBar = player.controlBar;
-            var el = controlBar.el();
-            
-            // Crear elemento espaciador
-            var spacer = document.createElement('div');
-            spacer.className = 'vjs-spacer';
-            
-            // Buscar el último elemento de tiempo (duración total)
-            var timeControls = el.querySelectorAll('.vjs-time-control');
-            var lastTimeControl = timeControls[timeControls.length - 1];
-            
-            // Insertar el espaciador después del último control de tiempo
-            if (lastTimeControl) {
-              lastTimeControl.parentNode.insertBefore(spacer, lastTimeControl.nextSibling);
-            } else {
-              // Si no hay controles de tiempo, insertar después del volumen
-              var volumePanel = el.querySelector('.vjs-volume-panel');
-              if (volumePanel) {
-                volumePanel.parentNode.insertBefore(spacer, volumePanel.nextSibling);
-              }
-            }
-        }
-
-        // Inicializar cuando el DOM esté listo
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', function() {
-                setTimeout(initApp, 150);
-            });
-        } else {
-            setTimeout(initApp, 150);
-        }
-    </script>
+document.getElementById("clear").onclick=()=>{
+  document.getElementById("messages").innerHTML="";
+};
+</script>
 </body>
 </html>

@@ -2,272 +2,279 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<title>Kick Chat - Tizen</title>
+<title>Kick Chat Only - Tizen</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
-body{font-family:Arial;background:#0d1117;color:#e6edf3;margin:0}
-header{padding:12px;background:#161b22;border-bottom:1px solid:#30363d;display:flex;gap:12px;align-items:center}
-input,button{padding:8px;border-radius:6px;border:1px solid:#30363d;background:#0d1117;color:#e6edf3}
-button{cursor:pointer;font-weight:bold}
-main{display:flex;height:calc(100vh - 60px)}
-aside{width:240px;background:#161b22;padding:8px;overflow:auto;border-right:1px solid:#30363d}
-#messages{flex:1;padding:10px;overflow:auto;font-size:16px}
-.msg{display:flex;gap:6px;margin-bottom:8px;padding:6px 10px;background:#1e2630;border-radius:8px}
-.username{font-weight:bold;margin-right:6px}
-.chat-emote{height:26px;margin:0 2px;vertical-align:middle;image-rendering:pixelated}
-.console{font-size:10px;white-space:pre-wrap;background:#0d1117;border:1px solid:#30363d;
-padding:6px;height:100px;overflow:auto;margin-top:10px;border-radius:6px}
-footer{padding:8px;border-top:1px solid:#30363d;background:#161b22;text-align:center;font-size:12px;color:#8b949e}
+body{
+  font-family:Arial, sans-serif;
+  background:#0d1117;
+  color:#e6edf3;
+  margin:0;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+.titulo {
+  padding:8px 12px;
+  background:#161b22;
+  border-bottom:2px solid #30363d;
+  text-align:center;
+  font-size:1rem;
+  line-height:1.5rem;
+  font-weight:700;
+  color:#ffffff;
+}
+#messages-container{
+  flex:1;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  padding:12px 0;
+  min-width:0;
+  min-height:0;
+}
+#messages{
+  flex:1; 
+  overflow:auto;    
+}
+
+/* Mensajes */
+.msg{
+  color:#ffffff;
+  font-weight:500;
+  font-size:1rem;
+  line-height:1.25rem;
+  margin:0 6px;
+  margin-top:2px;
+  padding:4px 8px;
+}
+.username{
+  font-size:1rem;
+  line-height:1.25rem;
+  font-weight:700;  
+  white-space:normal;
+}
+.colon{
+  color:#ffffff;
+  font-size:1rem;
+  line-height:1.25rem;
+  font-weight:900;
+  margin-right:2px;
+  white-space:normal;
+}
+.msg span:last-child{
+  word-break:break-word;
+}
+.chat-emote{
+  height:20px;
+  margin:0 2px;
+  vertical-align:middle;
+  image-rendering:pixelated;
+}
+
+/* Botón scroll */
+#scrollBottomBtn{  
+  position:absolute;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  width:70%;
+  max-width:400px;
+  background:#3A3B40;
+  color:#ffffff;
+  font-size:14px;
+  align-items: center;
+  justify-content: center;
+  display:flex;
+  border:none;
+  border-radius:4px;
+  padding:8px 10px;
+  font-weight:700;
+  cursor:pointer;
+  display:none;
+  z-index:10;
+}
+#scrollBottomBtn i{
+  font-size: 16px;
+  margin-right:6px;
+}
+.footer{
+  padding:8px;
+  border-top:1px solid #30363d;
+  background:#161b22;
+  text-align:center;
+  font-size:12px;color:#8b949e
+}
+/* Responsive */
+@media(max-width:600px){
+  #scrollBottomBtn{ width:74%; }
+}
 </style>
 </head>
 <body>
-
-<header>
-  <input id="room" placeholder="Canal Kick ej: Kingteka">
-  <button id="join">Unirse</button>
-  <button id="clear">Limpiar</button>
-</header>
-
-<main>
-  <aside>
-    <h4>Salas</h4>
-    <div id="roomsList"></div>
-    <div class="console" id="log"></div>
-  </aside>
+<div class="titulo">Chat</div>
+<div id="messages-container">
   <div id="messages"></div>
-</main>
+  <button id="scrollBottomBtn"><i class="fas fa-pause"></i>chat en pausa, ir al último mensaje</button>
+</div>
 
-<footer>Kick Chat Viewer — Tizen ✅</footer>
+<div class="footer">Kick Chat Viewer — Tizen ✅</div>
 
 <script>
-var log = function(m){
-  var el=document.getElementById("log");
-  el.textContent += "["+new Date().toLocaleTimeString()+"] "+m+"\n";
-  el.scrollTop = el.scrollHeight;
-};
+/* =========================
+   CONFIGURAR CANAL AQUÍ
+========================= */
+const AUTO_CHANNEL = "Kingteka"; // 👈 CAMBIA AQUÍ TU CANAL
 
-var ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0&flash=false");
-ws.onopen = function(){ log("✅ WebSocket Kick conectado"); };
-ws.onerror = function(){ log("❌ Error WebSocket"); };
-ws.onclose = function(e){ log("⚠️ WS cerrado: "+e.code); };
+/* =========================
+   LOG INTERNO SOLO CONSOLA
+========================= */
+var log=(m)=>console.log("[CHAT] "+m);
 
-var rooms = {};
+var ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0");
+ws.onopen = ()=>log("✅ WebSocket conectado");
+ws.onerror=()=>log("❌ Error WebSocket");
+ws.onclose=e=>log("⚠️ WS cerrado: "+e.code);
+
 var emotes = {};
-var currentChannelName = "";
+var rooms = {};
+const MAX_MESSAGES = 100;
+let pauseRemoval=false;
+let pauseRemovalTimer=null;
 
-/* =======================
-   7TV GLOBAL
-   ======================= */
-var xhrG = new XMLHttpRequest();
-xhrG.open("GET","https://7tv.io/v3/emote-sets/global");
-xhrG.onload = function(){
-  if(xhrG.status==200){
-    var d = JSON.parse(xhrG.responseText);
-    for(var i=0;i<d.emotes.length;i++){
-      var e=d.emotes[i];
-      var url = "https:" + e.data.host.url + "/3x."+e.data.host.files[0].format;
-      emotes[e.name] = url;
+const messagesBox=document.getElementById("messages");
+const scrollBtn=document.getElementById("scrollBottomBtn");
+
+/* ===== 7TV GLOBAL ===== */
+fetch("https://7tv.io/v3/emote-sets/global")
+.then(r=>r.json()).then(d=>{
+  d.emotes.forEach(e=>{
+    emotes[e.name]="https:"+e.data.host.url+"/3x";
+  });
+  log("🌍 7TV Global OK");
+});
+
+/* ===== 7TV CANAL ===== */
+function load7TV(name){
+  fetch("https://7tv.io/v3/users/kick/"+name)
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.emote_set?.emotes){
+      d.emote_set.emotes.forEach(e=>{
+        emotes[e.name]="https:"+e.data.host.url+"/3x."+e.data.host.files[0].format;
+      });
+      log("🎭 7TV canal OK");
     }
-    log("🌍 7TV global OK");
-  }
-};
-xhrG.send();
-
-/* =======================
-   7TV POR CANAL
-   ======================= */
-function load7TV(channelName){
-  var x = new XMLHttpRequest();
-  x.open("GET","https://7tv.io/v3/users/kick/"+channelName);
-  x.onload=function(){
-    try{
-      var d=JSON.parse(x.responseText);
-      if(d.emote_set && d.emote_set.emotes){
-        for(var i=0;i<d.emote_set.emotes.length;i++){
-          var e=d.emote_set.emotes[i];
-          var url="https:" + e.data.host.url + "/3x."+e.data.host.files[0].format;
-          emotes[e.name]=url;
-        }
-        log("🎭 7TV canal "+channelName+" OK");
-      }
-    }catch(e){ log("⚠️ Error 7TV canal "+channelName); }
-  };
-  x.send();
+  }).catch(()=>log("⚠️ Error 7TV canal"));
 }
 
-/* =======================
-   KICK EMOTES
-   ======================= */
-function loadKickEmotes(channelName){
-  var x = new XMLHttpRequest();
-  x.open("GET","https://kick.com/emotes/"+channelName);
-  x.onload = function(){
-    log("🔍 Kick emotes ruta respondio status "+x.status+" para canal "+channelName);
-    if(x.status!==200){
-      log("⚠️ Kick emotes falló para canal "+channelName);
-      return;
-    }
-    try{
-      var data = JSON.parse(x.responseText);
-      var count = 0;
-      for(var s=0; s<data.length; s++){
-        var sec = data[s];
-        if(sec.emotes && Array.isArray(sec.emotes)){
-          for(var j=0;j<sec.emotes.length;j++){
-            var e = sec.emotes[j];
-            if(e.id && e.name){
-              var url2 = "https://files.kick.com/emotes/"+e.id+"/fullsize";
-              emotes[e.name] = url2;
-              count++;
-            }
-          }
-        }
-      }
-      if(count>0){
-        log("✅ Emotes Kick cargados ("+count+") para canal "+channelName);
-      } else {
-        log("⚠️ No se encontraron emotes Kick listables para canal "+channelName);
-      }
-    }catch(err){ log("⚠️ Error parseando Kick emotes para canal "+channelName+" => "+err); }
-  };
-  x.onerror=function(){ log("❌ Error red al solicitar Kick emotes para canal "+channelName); };
-  x.send();
+/* ===== EMOTES KICK ===== */
+function loadKickEmotes(name){
+  fetch("https://kick.com/emotes/"+name)
+  .then(r=>{ log("🔍 Emotes Kick status "+r.status); return r.json(); })
+  .then(data=>{
+    let count=0;
+    data.forEach(sec=>{
+      sec.emotes?.forEach(e=>{
+        emotes[e.name]="https://files.kick.com/emotes/"+e.id+"/fullsize";
+        count++;
+      });
+    });
+    log(count?`✅ Kick emotes ${count}`:"⚠️ No emotes Kick");
+  }).catch(()=>log("❌ Error Kick emotes"));
 }
 
-/* =======================
-   OBTENER CHATROOM ID DESDE WORKER
-   ======================= */
-function getChatroomId(channelName, callback){
-  var x = new XMLHttpRequest();
-  var url = "https://strmkckchnnl.j4m1r-98.workers.dev/?channel="+channelName;
-  x.open("GET", url);
-  x.onload=function(){
-    if(x.status==200){
-      try{
-        var d=JSON.parse(x.responseText);
-        if(d.channel_info && d.channel_info.chatroom){
-          callback(d.channel_info.chatroom);
-          return;
-        }
-      }catch(e){ log("⚠️ Error parseando Worker: "+e); }
-    }
-    log("⚠️ No se obtuvo chatroom para "+channelName);
-  };
-  x.onerror=function(){ log("❌ Error red Worker para "+channelName); };
-  x.send();
+/* ===== GET CHATROOM ID ===== */
+function getChatroomId(name,cb){
+  fetch("https://kick.com/api/v2/channels/"+name)
+  .then(r=>r.json()).then(data=>{
+    const id=data.chatroom?.id;
+    id?cb(id):log("⚠️ Sin chatroom");
+  }).catch(()=>log("❌ Error API canal"));
 }
 
-/* =======================
-   SUSCRIBIR SALA
-   ======================= */
-function subscribeRoomById(chatroomId){
-  if(!chatroomId) return;
-  if(!rooms[chatroomId]) rooms[chatroomId] = true;
-  updateRoomsUI();
-
-  // Esperar a que WebSocket esté abierto
-  if(ws.readyState === WebSocket.OPEN){
-    ws.send(JSON.stringify({
-      event:"pusher:subscribe",
-      data:{auth:"",channel:"chatrooms."+chatroomId+".v2"}
-    }));
-  } else {
-    ws.addEventListener("open", function onOpen(){
-      ws.removeEventListener("open", onOpen);
+/* ===== SUBSCRIBE ===== */
+function joinChannel(name){
+  getChatroomId(name, id=>{
+    rooms[id]=true;
+    if(ws.readyState===1){
       ws.send(JSON.stringify({
         event:"pusher:subscribe",
-        data:{auth:"",channel:"chatrooms."+chatroomId+".v2"}
+        data:{auth:"",channel:"chatrooms."+id+".v2"}
       }));
-    });
-  }
-
-  load7TV(currentChannelName);
-  loadKickEmotes(currentChannelName);
-  log("📡 Sala unida "+chatroomId);
-}
-
-function joinChannel(channelName){
-  currentChannelName = channelName;
-  getChatroomId(channelName, function(chatroomId){
-    if(chatroomId){
-      subscribeRoomById(chatroomId);
-    } else {
-      log("⚠️ No se pudo unir a "+channelName);
+      load7TV(name);
+      loadKickEmotes(name);
+      log("📡 Conectado al chat");
     }
   });
 }
 
-function updateRoomsUI(){
-  var div=document.getElementById("roomsList");
-  div.innerHTML="";
-  for(var id in rooms){
-    var r=document.createElement("div");
-    r.textContent="• "+id;
-    div.appendChild(r);
-  }
-}
-
-/* =======================
-   PARSE EMOTES
-   ======================= */
+/* ===== PARSE EMOTES ===== */
 function parseEmotes(text){
-  // Reemplaza [emote:ID:nombre] por la URL del emote
-  return text.replace(/\[emote:\d+:(.+?)\]/g, (match, name)=>{
-    if(emotes[name]){
-      return "<img class='chat-emote' src='"+emotes[name]+"'>";
-    }
-    return name; // si no se encuentra el emote, mostrar solo el nombre
+  return text.replace(/\[emote:\d+:(.+?)\]/g,(m,n)=>{
+    return emotes[n]?`<img class='chat-emote' src='${emotes[n]}'>`:n;
   });
 }
 
-
-/* =======================
-   COLOR NOMBRE
-   ======================= */
+/* ===== NAME COLOR ===== */
 function nameColor(n){
-  var h=0;
-  for(var i=0;i<n.length;i++){h+=n.charCodeAt(i);}
+  let h=0;for(let i=0;i<n.length;i++)h+=n.charCodeAt(i);
   return "hsl("+(h%360)+",70%,75%)";
 }
 
-/* =======================
-   MENSAJES WS
-   ======================= */
-ws.onmessage=function(ev){
-  try{
-    var o=JSON.parse(ev.data);
-    if(!o.data) return;
-    var d=JSON.parse(o.data);
-    if(d.sender && d.content){
-      addMsg(d.sender.username, d.content);
-    }
-  }catch(e){}
-};
+/* ===== SCROLL EVENT ===== */
+messagesBox.addEventListener("scroll",()=>{
+  const atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+  if(!atBottom){
+    pauseRemoval=true;
+    scrollBtn.style.display="flex";
+    clearTimeout(pauseRemovalTimer);
+    pauseRemovalTimer=setTimeout(()=>pauseRemoval=false,60000);
+  } else scrollBtn.style.display="none";
+});
 
+/* ===== ADD MSG ===== */
 function addMsg(user,text){
-  var box=document.getElementById("messages");
-  var div=document.createElement("div");
-  div.className="msg";
+  const atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+  
+  const d=document.createElement("div");
+  d.className="msg";
+  const c=nameColor(user);
+  text=parseEmotes(text);
 
-  var c=nameColor(user);
-  var parsed=parseEmotes(text);
+  d.innerHTML=`<span class="username" style="color:${c}">${user}</span><span class="colon">:</span> <span>${text}</span>`;
+  messagesBox.appendChild(d);
 
-  div.innerHTML="<span class='username' style='color:"+c+"'>"+user+":</span><span>"+parsed+"</span>";
+  if(!pauseRemoval){
+    while(messagesBox.children.length>MAX_MESSAGES)
+      messagesBox.removeChild(messagesBox.firstChild);
+  }
 
-  box.appendChild(div);
-  box.scrollTop=box.scrollHeight;
+  if(atBottom){
+    messagesBox.scrollTop=messagesBox.scrollHeight;
+    scrollBtn.style.display="none";
+  }
 }
 
-/* =======================
-   BOTONES UI
-   ======================= */
-document.getElementById("join").onclick=function(){
-  var channelName = document.getElementById("room").value.trim();
-  if(channelName) joinChannel(channelName);
+/* ===== WS MESSAGE ===== */
+ws.onmessage=e=>{
+  try{
+    const o=JSON.parse(e.data);
+    if(!o.data) return;
+    const d=JSON.parse(o.data);
+    if(d.sender && d.content) addMsg(d.sender.username,d.content);
+  }catch{}
 };
 
-document.getElementById("clear").onclick=function(){
-  document.getElementById("messages").innerHTML="";
+/* ===== BOTON SCROLL ===== */
+scrollBtn.onclick=()=>{
+  messagesBox.scrollTop=messagesBox.scrollHeight;
+  scrollBtn.style.display="none";
 };
+
+/* ===== AUTO-CONNECT ===== */
+setTimeout(()=>joinChannel(AUTO_CHANNEL),800);
 </script>
 
 </body>

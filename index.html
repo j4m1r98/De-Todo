@@ -125,83 +125,126 @@ body{
 /* =========================
    CONFIGURAR CANAL AQUÍ
 ========================= */
-const AUTO_CHANNEL = "Kingteka"; // 👈 CAMBIA AQUÍ TU CANAL
+var AUTO_CHANNEL = "Kingteka"; // 👈 CAMBIA AQUÍ TU CANAL
 
 /* =========================
    LOG INTERNO SOLO CONSOLA
 ========================= */
-var log=(m)=>console.log("[CHAT] "+m);
+var log = function(m) {
+  console.log("[CHAT] " + m);
+};
 
 var ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0");
-ws.onopen = ()=>log("✅ WebSocket conectado");
-ws.onerror=()=>log("❌ Error WebSocket");
-ws.onclose=e=>log("⚠️ WS cerrado: "+e.code);
+ws.onopen = function() { log("✅ WebSocket conectado"); };
+ws.onerror = function() { log("❌ Error WebSocket"); };
+ws.onclose = function(e) { log("⚠️ WS cerrado: " + e.code); };
 
 var emotes = {};
 var rooms = {};
-const MAX_MESSAGES = 100;
-let pauseRemoval=false;
-let pauseRemovalTimer=null;
+var MAX_MESSAGES = 100;
+var pauseRemoval = false;
+var pauseRemovalTimer = null;
 
-const messagesBox=document.getElementById("messages");
-const scrollBtn=document.getElementById("scrollBottomBtn");
+var messagesBox = document.getElementById("messages");
+var scrollBtn = document.getElementById("scrollBottomBtn");
 
 /* ===== 7TV GLOBAL ===== */
-fetch("https://7tv.io/v3/emote-sets/global")
-.then(r=>r.json()).then(d=>{
-  d.emotes.forEach(e=>{
-    emotes[e.name]="https:"+e.data.host.url+"/3x";
-  });
-  log("🌍 7TV Global OK");
-});
+var xhrGlobal = new XMLHttpRequest();
+xhrGlobal.open("GET", "https://7tv.io/v3/emote-sets/global");
+xhrGlobal.onload = function() {
+  if (xhrGlobal.status === 200) {
+    var data = JSON.parse(xhrGlobal.responseText);
+    for (var i = 0; i < data.emotes.length; i++) {
+      var emote = data.emotes[i];
+      emotes[emote.name] = "https:" + emote.data.host.url + "/3x";
+    }
+    log("🌍 7TV Global OK");
+  }
+};
+xhrGlobal.send();
 
 /* ===== 7TV CANAL ===== */
-function load7TV(name){
-  fetch("https://7tv.io/v3/users/kick/"+name)
-  .then(r=>r.json())
-  .then(d=>{
-    if(d.emote_set?.emotes){
-      d.emote_set.emotes.forEach(e=>{
-        emotes[e.name]="https:"+e.data.host.url+"/3x."+e.data.host.files[0].format;
-      });
-      log("🎭 7TV canal OK");
+function load7TV(name) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://7tv.io/v3/users/kick/" + name);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        if (data.emote_set && data.emote_set.emotes) {
+          for (var i = 0; i < data.emote_set.emotes.length; i++) {
+            var emote = data.emote_set.emotes[i];
+            emotes[emote.name] = "https:" + emote.data.host.url + "/3x." + emote.data.host.files[0].format;
+          }
+          log("🎭 7TV canal OK");
+        }
+      } catch (e) {
+        log("⚠️ Error 7TV canal");
+      }
     }
-  }).catch(()=>log("⚠️ Error 7TV canal"));
+  };
+  xhr.send();
 }
 
 /* ===== EMOTES KICK ===== */
-function loadKickEmotes(name){
-  fetch("https://kick.com/emotes/"+name)
-  .then(r=>{ log("🔍 Emotes Kick status "+r.status); return r.json(); })
-  .then(data=>{
-    let count=0;
-    data.forEach(sec=>{
-      sec.emotes?.forEach(e=>{
-        emotes[e.name]="https://files.kick.com/emotes/"+e.id+"/fullsize";
-        count++;
-      });
-    });
-    log(count?`✅ Kick emotes ${count}`:"⚠️ No emotes Kick");
-  }).catch(()=>log("❌ Error Kick emotes"));
+function loadKickEmotes(name) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://kick.com/emotes/" + name);
+  xhr.onload = function() {
+    log("🔍 Emotes Kick status " + xhr.status);
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var count = 0;
+        for (var i = 0; i < data.length; i++) {
+          var section = data[i];
+          if (section.emotes) {
+            for (var j = 0; j < section.emotes.length; j++) {
+              var emote = section.emotes[j];
+              emotes[emote.name] = "https://files.kick.com/emotes/" + emote.id + "/fullsize";
+              count++;
+            }
+          }
+        }
+        log(count ? "✅ Kick emotes " + count : "⚠️ No emotes Kick");
+      } catch (e) {
+        log("❌ Error Kick emotes");
+      }
+    }
+  };
+  xhr.send();
 }
 
 /* ===== GET CHATROOM ID ===== */
-function getChatroomId(name,cb){
-  fetch("https://kick.com/api/v2/channels/"+name)
-  .then(r=>r.json()).then(data=>{
-    const id=data.chatroom?.id;
-    id?cb(id):log("⚠️ Sin chatroom");
-  }).catch(()=>log("❌ Error API canal"));
+function getChatroomId(name, cb) {
+  var xhr = new XMLHttpRequest();
+  xhr.open("GET", "https://kick.com/api/v2/channels/" + name);
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      try {
+        var data = JSON.parse(xhr.responseText);
+        var id = data.chatroom && data.chatroom.id;
+        if (id) {
+          cb(id);
+        } else {
+          log("⚠️ Sin chatroom");
+        }
+      } catch (e) {
+        log("❌ Error API canal");
+      }
+    }
+  };
+  xhr.send();
 }
 
 /* ===== SUBSCRIBE ===== */
-function joinChannel(name){
-  getChatroomId(name, id=>{
-    rooms[id]=true;
-    if(ws.readyState===1){
+function joinChannel(name) {
+  getChatroomId(name, function(id) {
+    rooms[id] = true;
+    if (ws.readyState === 1) {
       ws.send(JSON.stringify({
-        event:"pusher:subscribe",
-        data:{auth:"",channel:"chatrooms."+id+".v2"}
+        event: "pusher:subscribe",
+        data: { auth: "", channel: "chatrooms." + id + ".v2" }
       }));
       load7TV(name);
       loadKickEmotes(name);
@@ -211,70 +254,84 @@ function joinChannel(name){
 }
 
 /* ===== PARSE EMOTES ===== */
-function parseEmotes(text){
-  return text.replace(/\[emote:\d+:(.+?)\]/g,(m,n)=>{
-    return emotes[n]?`<img class='chat-emote' src='${emotes[n]}'>`:n;
+function parseEmotes(text) {
+  return text.replace(/\[emote:\d+:(.+?)\]/g, function(match, name) {
+    return emotes[name] ? "<img class='chat-emote' src='" + emotes[name] + "'>" : name;
   });
 }
 
 /* ===== NAME COLOR ===== */
-function nameColor(n){
-  let h=0;for(let i=0;i<n.length;i++)h+=n.charCodeAt(i);
-  return "hsl("+(h%360)+",70%,75%)";
+function nameColor(n) {
+  var h = 0;
+  for (var i = 0; i < n.length; i++) {
+    h += n.charCodeAt(i);
+  }
+  return "hsl(" + (h % 360) + ",70%,75%)";
 }
 
 /* ===== SCROLL EVENT ===== */
-messagesBox.addEventListener("scroll",()=>{
-  const atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
-  if(!atBottom){
-    pauseRemoval=true;
-    scrollBtn.style.display="flex";
+messagesBox.addEventListener("scroll", function() {
+  var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+  if (!atBottom) {
+    pauseRemoval = true;
+    scrollBtn.style.display = "flex";
     clearTimeout(pauseRemovalTimer);
-    pauseRemovalTimer=setTimeout(()=>pauseRemoval=false,60000);
-  } else scrollBtn.style.display="none";
+    pauseRemovalTimer = setTimeout(function() { 
+      pauseRemoval = false; 
+    }, 60000);
+  } else {
+    scrollBtn.style.display = "none";
+  }
 });
 
 /* ===== ADD MSG ===== */
-function addMsg(user,text){
-  const atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+function addMsg(user, text) {
+  var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
   
-  const d=document.createElement("div");
-  d.className="msg";
-  const c=nameColor(user);
-  text=parseEmotes(text);
+  var msgElement = document.createElement("div");
+  msgElement.className = "msg";
+  var color = nameColor(user);
+  var parsedText = parseEmotes(text);
 
-  d.innerHTML=`<span class="username" style="color:${c}">${user}</span><span class="colon">:</span> <span>${text}</span>`;
-  messagesBox.appendChild(d);
+  msgElement.innerHTML = "<span class='username' style='color:" + color + "'>" + user + "</span><span class='colon'>:</span> <span>" + parsedText + "</span>";
+  messagesBox.appendChild(msgElement);
 
-  if(!pauseRemoval){
-    while(messagesBox.children.length>MAX_MESSAGES)
+  if (!pauseRemoval) {
+    while (messagesBox.children.length > MAX_MESSAGES) {
       messagesBox.removeChild(messagesBox.firstChild);
+    }
   }
 
-  if(atBottom){
-    messagesBox.scrollTop=messagesBox.scrollHeight;
-    scrollBtn.style.display="none";
+  if (atBottom) {
+    messagesBox.scrollTop = messagesBox.scrollHeight;
+    scrollBtn.style.display = "none";
   }
 }
 
 /* ===== WS MESSAGE ===== */
-ws.onmessage=e=>{
-  try{
-    const o=JSON.parse(e.data);
-    if(!o.data) return;
-    const d=JSON.parse(o.data);
-    if(d.sender && d.content) addMsg(d.sender.username,d.content);
-  }catch{}
+ws.onmessage = function(e) {
+  try {
+    var data = JSON.parse(e.data);
+    if (!data.data) return;
+    var messageData = JSON.parse(data.data);
+    if (messageData.sender && messageData.content) {
+      addMsg(messageData.sender.username, messageData.content);
+    }
+  } catch(e) {
+    // Error silencioso
+  }
 };
 
 /* ===== BOTON SCROLL ===== */
-scrollBtn.onclick=()=>{
-  messagesBox.scrollTop=messagesBox.scrollHeight;
-  scrollBtn.style.display="none";
+scrollBtn.onclick = function() {
+  messagesBox.scrollTop = messagesBox.scrollHeight;
+  scrollBtn.style.display = "none";
 };
 
 /* ===== AUTO-CONNECT ===== */
-setTimeout(()=>joinChannel(AUTO_CHANNEL),800);
+setTimeout(function() { 
+  joinChannel(AUTO_CHANNEL); 
+}, 800);
 </script>
 
 </body>

@@ -234,7 +234,7 @@
             color: #efeff1;
         }
 
-        /* Estados de pantalla completa */
+        /* Estados de pantalla completa - CORREGIDOS */
         .fullscreen-mode {
             position: fixed;
             top: 0;
@@ -256,6 +256,7 @@
             transition: width 0.3s;
         }
 
+        /* CORRECCIÓN: Cuando el chat está oculto, el main-content ocupa toda la pantalla */
         .fullscreen-mode.hide-chat .main-content {
             width: 100vw;
         }
@@ -279,8 +280,10 @@
         .fullscreen-mode .chat-sidebar {
             width: 340px;
             height: 100vh;
+            transition: transform 0.3s, width 0.3s;
         }
 
+        /* CORRECCIÓN: Cuando el chat está oculto, se oculta completamente sin ocupar espacio */
         .fullscreen-mode.hide-chat .chat-sidebar {
             transform: translateX(100%);
             width: 0;

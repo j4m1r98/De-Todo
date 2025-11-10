@@ -85,7 +85,7 @@
             flex-direction: column;
             padding: 20px;
             overflow: hidden;
-            transition: all 0.3s;
+            transition: margin-right 0.3s;
         }
 
         .video-container {
@@ -178,7 +178,7 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            transition: all 0.3s;
+            transition: transform 0.3s, width 0.3s;
         }
 
         .chat-header {
@@ -234,7 +234,7 @@
             color: #efeff1;
         }
 
-        /* Estados de pantalla completa */
+        /* Estados de pantalla completa - CORREGIDOS */
         .fullscreen-mode {
             position: fixed;
             top: 0;
@@ -249,12 +249,14 @@
         .fullscreen-mode .main-content {
             flex: 1;
             padding: 0;
+            margin-right: 0;
             display: flex;
             flex-direction: column;
             width: calc(100vw - 340px);
             transition: width 0.3s;
         }
 
+        /* CORRECCIÓN: Cuando el chat está oculto, el main-content ocupa toda la pantalla */
         .fullscreen-mode.hide-chat .main-content {
             width: 100vw;
         }
@@ -278,8 +280,10 @@
         .fullscreen-mode .chat-sidebar {
             width: 340px;
             height: 100vh;
+            transition: transform 0.3s, width 0.3s;
         }
 
+        /* CORRECCIÓN: Cuando el chat está oculto, se oculta completamente sin ocupar espacio */
         .fullscreen-mode.hide-chat .chat-sidebar {
             transform: translateX(100%);
             width: 0;
@@ -297,16 +301,13 @@
             z-index: 1002;
         }
 
-        /* Estados del chat oculto en modo normal - CORREGIDOS */
+        /* Estados del chat oculto en modo normal */
         body.hide-chat-normal .chat-sidebar {
-            position: fixed;
-            right: 0;
             transform: translateX(100%);
-            width: 0;
         }
 
         body.hide-chat-normal .main-content {
-            width: calc(100vw - 240px);
+            margin-right: 0;
         }
 
         /* Botón para mostrar chat en pantalla completa */
@@ -360,10 +361,6 @@
             .fullscreen-mode .main-content {
                 width: calc(100vw - 300px);
             }
-            
-            body.hide-chat-normal .main-content {
-                width: calc(100vw - 240px);
-            }
         }
 
         @media (max-width: 900px) {
@@ -373,10 +370,6 @@
             
             .channel-info, .channel-game, .channel-viewers {
                 display: none;
-            }
-            
-            body.hide-chat-normal .main-content {
-                width: calc(100vw - 70px);
             }
         }
     </style>

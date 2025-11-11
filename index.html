@@ -254,6 +254,7 @@
         }
         
         .channel-info { 
+            diplay: none;
             margin-bottom: 15px; 
             padding: 15px; 
             background: #1a1a1a; 
@@ -667,39 +668,7 @@
             color: #8b949e
         }
 
-        /* Controles de video */
-        .video-controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0,0,0,0.7));
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-
-        .video-container:hover .video-controls {
-            opacity: 1;
-        }
-
-        .control-btn {
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 16px;
-            margin: 0 5px;
-            min-width: 40px;
-            min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+        
 
         /* Botón de pantalla completa */
         .fullscreen-btn {
@@ -1000,15 +969,7 @@
             
             <div class="video-container" id="videoContainer">
                 <video id="videoPlayer" controls style="display: none;"></video>
-                
-                <!-- Controles de video -->
-                <div class="video-controls">
-                    <div>
-                        <button class="control-btn" id="playPauseBtn">⏸️</button>
-                        <button class="control-btn" id="muteBtn">🔊</button>
-                    </div>
-                    <button class="control-btn" id="fullscreenBtn">⛶</button>
-                </div>
+                               
                 
                 <!-- Botón de pantalla completa -->
                 <button class="fullscreen-btn" id="fullscreenBtnIcon"><i class="fas fa-expand"></i></button>
@@ -1072,54 +1033,20 @@
         
         // Variables para controles de video
         var video = document.getElementById('videoPlayer');
-        var fullscreenBtn = document.getElementById('fullscreenBtn');
+        
         var fullscreenBtnIcon = document.getElementById('fullscreenBtnIcon');
         var videoContainer = document.getElementById('videoContainer');
         var toggleChatBtn = document.getElementById('toggleChatBtn');
         var showChatBtn = document.getElementById('showChatBtn');
         var showChatNormalBtn = document.getElementById('showChatNormalBtn');
-        var playPauseBtn = document.getElementById('playPauseBtn');
-        var muteBtn = document.getElementById('muteBtn');
+        
         
         // Variables de estado
         var isFullscreen = false;
         var isChatHidden = false;
         
         // Lista de canales guardados
-        var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];
-
-        // Inicializar controles de video
-        function initVideoControls() {
-            // Control de reproducción/pausa
-            playPauseBtn.addEventListener('click', function() {
-                if (video.paused) {
-                    video.play();
-                    playPauseBtn.textContent = '⏸️';
-                } else {
-                    video.pause();
-                    playPauseBtn.textContent = '▶️';
-                }
-            });
-            
-            // Control de silencio
-            muteBtn.addEventListener('click', function() {
-                if (video.muted) {
-                    video.muted = false;
-                    muteBtn.textContent = '🔊';
-                } else {
-                    video.muted = true;
-                    muteBtn.textContent = '🔇';
-                }
-            });
-            
-            // Actualizar estado de los botones según el estado del video
-            video.addEventListener('play', function() {
-                playPauseBtn.textContent = '⏸️';
-            });
-            
-            video.addEventListener('pause', function() {
-                playPauseBtn.textContent = '▶️';
-            });
+        var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];                    
             
             // Configurar pantalla completa
             setupFullscreen();
@@ -1130,10 +1057,7 @@
 
         // Función para configurar pantalla completa
         function setupFullscreen() {
-            // Botón de pantalla completa
-            fullscreenBtn.addEventListener('click', function() {
-                toggleFullscreen();
-            });
+            
             
             // Botón de pantalla completa con icono
             fullscreenBtnIcon.addEventListener('click', function() {

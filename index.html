@@ -1,673 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Stream Player</title>
-    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Platform</title>
     <style>
-        :root {
-            --left-column-width: 220px;
-            --right-column-width: 320px;
-        }
-        
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
+        * {
+            margin: 0;
             padding: 0;
-            background: #0f0f0f; 
-            color: white; 
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #0e0e10;
+            color: #efeff1;
+            display: flex;
             height: 100vh;
             overflow: hidden;
         }
-        
-        .app-container {
-            display: flex;
-            height: 100vh;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        /* Columna izquierda - Controles */
-        .left-column {
-            width: var(--left-column-width);
-            background: #1a1a1a;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
+
+        /* Sidebar de canales */
+        .channels-sidebar {
+            width: 240px;
+            background-color: #1f1f23;
+            padding: 10px;
             overflow-y: auto;
-            box-sizing: border-box;
-            transition: all 0.3s ease;
+            height: 100vh;
+            transition: width 0.3s;
         }
-        
-        .left-column h1 {
+
+        .channels-sidebar h2 {
+            padding: 10px;
             font-size: 18px;
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: white;
-        }
-        
-        .left-column h1 i {
-            margin-right: 8px;
-            color: white;
-        }
-        
-        .controls { 
+            border-bottom: 1px solid #343437;
             margin-bottom: 15px;
         }
-        
-        .controls input {
-            width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
+
+        .channel-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-bottom: 5px;
+            transition: background-color 0.2s;
         }
-        
-        .controls button {
-            width: 100%;
-            margin: 5px 0;
-            box-sizing: border-box;
+
+        .channel-item:hover {
+            background-color: #26262c;
         }
-        
-        .quality-selector {
-            margin: 10px 0;
+
+        .channel-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin-right: 10px;
+            background-color: #9147ff;
         }
-        
-        .quality-btn {
-            width: 100%;
-            box-sizing: border-box;
+
+        .channel-info {
+            flex: 1;
         }
-        
-        /* Columna central - Video y canales */
-        .center-column {
+
+        .channel-name {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .channel-game {
+            font-size: 12px;
+            color: #adadb8;
+        }
+
+        .channel-viewers {
+            font-size: 12px;
+            color: #adadb8;
+        }
+
+        /* Contenido principal */
+        .main-content {
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 15px;
-            overflow-y: auto;
-            box-sizing: border-box;
-            min-width: 0;
-            transition: all 0.3s ease;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            padding: 20px;
+            overflow: hidden;
+            transition: margin-right 0.3s;
         }
-        
-        .center-column::-webkit-scrollbar {
-            display: none;
-        }
-        
-        .status { 
-            padding: 10px; 
-            margin-bottom: 15px; 
-            border-radius: 4px; 
-        }
-        .success { background: #1a3c1a; color: #4CAF50; }
-        .error { background: #3c1a1a; color: #f44336; }
-        .loading { background: #1a1a3c; color: #2196F3; }
-        
+
         .video-container {
             position: relative;
             width: 100%;
-            height: 0;
-            padding-top: 56.25%; /* 16:9 Aspect Ratio */
-            background: black;
+            background-color: #000;
             border-radius: 8px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-        }
-        
-        video { 
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: black; 
-            border-radius: 8px;
-        }
-        
-        .offline-placeholder {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #1a1a1a;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            box-sizing: border-box;
-            text-align: center;
-        }
-
-        .offline-icon {
-            font-size: 64px;
-            color: #ccc;
-            margin-bottom: 20px;
-        }
-
-        .offline-channel-name {
-            font-size: 24px;
-            font-weight: bold;
-            margin: 0 0 10px 0;
-            color: white;
-        }
-
-        .offline-status {
-            font-size: 18px;
-            color: #ccc;
-            margin-bottom: 8px;
-        }
-
-        .offline-last-time {
-            font-size: 14px;
-            color: #aaa;
-            margin-bottom: 20px;
-        }
-
-        .offline-btn {
-            background: #6441a5;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600; 
-            display: flex;
-            align-items: center;   
-        }
-
-        .offline-btn i {
-            margin-right: 8px;
-        }
-        .offline-btn:hover {
-            background: #7a52c4;
-        }
-             
-        select, button, input { 
-            padding: 8px 12px; 
-            margin: 5px; 
-            background: #333; 
-            color: white; 
-            border: 1px solid #555; 
-            border-radius: 4px; 
-        }
-        button { 
-            background: #6441a5; 
-            cursor: pointer; 
-        }
-        button:hover { background: #7a52c4; }
-        
-        .quality-selector { 
-            margin: 10px 0; 
-            position: relative;
-            display: inline-block;
-        }
-        .quality-btn {
-            background: #6441a5;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-        .quality-btn .fa-cog {
-            margin-right: 8px;
-        }
-        .quality-btn .fa-chevron-down {
-            margin-left: 8px;
-        }
-        .quality-dropdown {
-            display: none;
-            position: absolute;
-            top: 100%;
-            left: 0;
-            background: #333;
-            border: 1px solid #555;
-            border-radius: 4px;
-            min-width: 120px;
-            z-index: 1000;
-            margin-top: 5px;
-        }
-        .quality-dropdown.show {
-            display: block;
-        }
-        .quality-option {
-            padding: 8px 12px;
-            cursor: pointer;
-            color: white;
-            border-bottom: 1px solid #555;
-        }
-        .quality-option:last-child {
-            border-bottom: none;
-        }
-        .quality-option:hover {
-            background: #444;
-        }
-        .quality-option.active {
-            background: #6441a5;
-            color: white;
-        }
-        
-        .channel-info { 
-            margin-bottom: 15px; 
-            padding: 15px; 
-            background: #1a1a1a; 
-            border-radius: 8px; 
-            transition: opacity 0.3s ease;
-        }
-        .channel-main-info {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-        .channel-profile-container {
-            display: flex;
-            align-items: center;
-            width: 100%;
-        }
-        .channel-profile-pic {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 15px;
-            border: 2px solid #6441a5;
-        }
-        .profile-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin-right: 15px;
-            border: 2px solid #6441a5;
-            background: #2a2a2a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: #6441a5;
-        }
-        .channel-text-info {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            position: relative;
-        }
-        .channel-name-line {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-            margin-bottom: 5px;
-        }
-        .channel-name {
-            font-size: 18px;
-            font-weight: bold;
-            display: Flex;
-            align-items: center;
-            grid-gap: 6px;
-            margin-right: 6px;
-        }
-        .verified-badge {
-            width: 19px;
-            height: 19px;
-        }
-        .channel-title {
-            color: #ccc;
-            font-size: 14px;
-        }
-        .channel-viewers {
-            display: flex;
-            align-items: center;
-            font-size: 14px;
-            color: #aaa;
-        }
-        .viewers-count {
-            margin-left: 8px;
-            font-weight: 500;
-        }
-        .offline-time {
-            color: #aaa;
-            font-size: 14px;           
-        }
-        
-        /* Estilos para la lista de canales */
-        .channels-list { 
-            margin-bottom: 15px; 
-            background: #1a1a1a; 
-            border-radius: 8px; 
-            padding: 15px; 
-        }
-        .channels-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;            
-        }
-        .channels-header h2 {
-            margin: 15px 0;
-        }
-        .refresh-btn {
-            background: #6441a5;
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-        }
-        .refresh-btn i {
-            margin-right: 5px;
-        }
-        .refresh-btn:hover {
-            background: #7a52c4;
-        }
-        .tabs-container { 
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            grid-gap: 15px;
-            gap: 15px;
-            margin: 15px 0; 
-        }
-        .channel-tab { 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            background: #2a2a2a; 
-            border-radius: 8px; 
-            padding: 15px 10px; 
-            width: 100%; 
-            text-align: center;             
-            box-sizing: border-box;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-        .channel-tab:hover { 
-            background: #3a3a3a; 
-        }
-        .channel-tab.active { 
-            border: 2px solid #6441a5; 
-        }
-        .channel-img { 
-            width: 60px; 
-            height: 60px; 
-            border-radius: 50%; 
-            object-fit: cover; 
-            margin-bottom: 15px; 
-            border: 2px solid #6441a5;
-        }
-        .channel-img-placeholder {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            margin-bottom: 14px;
-            border: 2px solid #6441a5;
-            background: #2a2a2a;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 36px;
-            color: #6441a5;
-        }
-        .channel-name-tab { 
-            font-size: 14px; 
-            font-weight: 600;
-            margin-bottom: 14px; 
-            overflow: hidden; 
-            text-overflow: ellipsis; 
-            width: 100%; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .channel-status {
-            display: flex;
-            align-items: center;
-            font-size: 12px;
-            margin-bottom: 14px;
-            width: 100%;
-            justify-content: center;
-        }
-        .channel-status.online {
-            color: #ccc;
-        }
-        .channel-status.offline {
-            color: #f44336;
-        }
-        .channel-status i {
-            margin-right: 4px;
-            font-size: 10px;
-        }
-        .view-btn { 
-            background: #6441a5; 
-            border: none; 
-            color: white; 
-            padding: 5px 10px; 
-            margin: 0;
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-size: 12px; 
-            font-weight: 500;
-            width: 100%; 
-        }
-        .view-btn i { 
-            margin-right: 3px;
-        }
-        .view-btn:hover { 
-            background: #7a52c4; 
-        }
-        .view-btn.offline { 
-            background: transparent;
-            font-weight: 500; 
-            border: 0; 
-            color: #ffffff; 
-        }
-        .view-btn.offline:hover { 
-            background: none; 
-            color: white; 
-        }
-        .delete-btn { 
-            position: absolute; 
-            top: 6px; 
-            right: 6px; 
-            background: rgba(0,0,0,0.7); 
-            border: none; 
-            color: white; 
-            border-radius: 50%; 
-            width: 22px; 
-            height: 22px;
-            padding: 0;
-            margin: 0;
-            cursor: pointer; 
-            font-size: 12px;            
-            align-items: center; 
-            justify-content: center; 
-        }
-        .channel-tab-wrapper .delete-btn {
-            display: none;
-        }
-        .channel-tab-wrapper:hover .delete-btn {
-            display: flex;
-        }
-        .channel-tab-wrapper { 
-            position: relative; 
-            min-width: 0;
-        }
-        .empty-list { 
-            text-align: center; 
-            display: flex;
-            flex-direction: column;
-            grid-column: 1 / -1;
-            padding: 20px; 
-            color: #888; 
-        }
-        .empty-list i {
-            margin-bottom: 12px;
-            font-size: 20px;  
-        } 
- 
-        /* Fallback para dispositivos que NO soportan grid */
-        @supports not (display: grid) {
-            .tabs-container {
-                display: flex;
-                flex-wrap: wrap;
-                justify-content: flex-start;
-                margin-top: -7px;
-                margin-left: -7px;
-            }
-
-            .tabs-container > .channel-tab {
-                flex: 1 1 120px;
-                margin-top: 7px;
-                margin-left: 7px;
-                box-sizing: border-box;
-            }
-        }
-
-        /* Columna derecha - Chat */
-        .right-column {
-            width: var(--right-column-width);
-            background: #0d1117;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            transition: all 0.3s ease;
-        }
-        
-        .titulo {
-            padding: 8px 12px;
-            background: #161b22;
-            border-bottom: 2px solid #30363d;
-            text-align: center;
-            font-size: 1rem;
-            line-height: 1.5rem;
-            font-weight: 700;
-            color: #ffffff;
-            margin: 0;
-        }
-        
-        #messages-container {
-            flex: 1;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            padding: 12px 0;
-            min-width: 0;
-            min-height: 0;
             overflow: hidden;
+            margin-bottom: 15px;
         }
-        
-        #messages {
-            flex: 1; 
-            overflow: auto;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-            padding-right: 5px;
-        }
-        
-        #messages::-webkit-scrollbar {
-            width: 6px;
-            display: none;
-        }
-        
-        #messages:hover::-webkit-scrollbar {
+
+        video {
+            width: 100%;
+            height: auto;
             display: block;
         }
-        
-        #messages::-webkit-scrollbar-track {
-            background: #161b22;
-            border-radius: 3px;
-        }
-        
-        #messages::-webkit-scrollbar-thumb {
-            background: #30363d;
-            border-radius: 3px;
-        }
-        
-        #messages::-webkit-scrollbar-thumb:hover {
-            background: #484f58;
-        }
 
-        /* Mensajes */
-        .msg {
-            color: #ffffff;
-            font-weight: 500;
-            font-size: 1rem;
-            line-height: 1.25rem;
-            margin: 0 6px;
-            margin-top: 2px;
-            padding: 4px 8px;
-        }
-        
-        .username {
-            font-size: 1rem;
-            line-height: 1.25rem;
-            font-weight: 700;  
-            white-space: normal;
-        }
-        
-        .colon {
-            color: #ffffff;
-            font-size: 1rem;
-            line-height: 1.25rem;
-            font-weight: 900;
-            margin-right: 2px;
-            white-space: normal;
-        }
-        
-        .msg span:last-child {
-            word-break: break-word;
-        }
-        
-        .chat-emote {
-            height: 20px;
-            margin: 0 2px;
-            vertical-align: middle;
-            image-rendering: pixelated;
-        }
-
-        /* Botón scroll */
-        #scrollBottomBtn {  
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 70%;
-            max-width: 400px;
-            background: #3A3B40;
-            color: #ffffff;
-            font-size: 14px;
-            align-items: center;
-            justify-content: center;
-            display: flex;
-            border: none;
-            border-radius: 4px;
-            padding: 8px 10px;
-            font-weight: 700;
-            cursor: pointer;
-            display: none;
-            z-index: 10;
-        }
-        
-        #scrollBottomBtn i {
-            font-size: 16px;
-            margin-right: 6px;
-        }
-        
-        .footer {
-            padding: 8px;
-            border-top: 1px solid #30363d;
-            background: #161b22;
-            text-align: center;
-            font-size: 12px;
-            color: #8b949e
-        }
-
-        /* Controles de video */
         .video-controls {
             position: absolute;
             bottom: 0;
@@ -678,13 +113,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 10;
-        }
-
-        .video-container:hover .video-controls {
-            opacity: 1;
         }
 
         .control-btn {
@@ -696,42 +124,63 @@
             margin: 0 5px;
             min-width: 40px;
             min-height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* Botón de pantalla completa */
-        .fullscreen-btn {
-            position: absolute;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(100, 65, 165, 0.8);
-            border: none;
-            color: white;
-            width: 50px;
-            height: 50px;
+        .channel-info-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .channel-avatar-large {
+            width: 60px;
+            height: 60px;
             border-radius: 50%;
-            cursor: pointer;
+            margin-right: 15px;
+            background-color: #9147ff;
+        }
+
+        .channel-details {
+            flex: 1;
+        }
+
+        .channel-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .channel-stream-info {
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            transition: all 0.3s;
-            opacity: 0;
-            z-index: 10;
+            font-size: 14px;
+            color: #adadb8;
         }
 
-        .video-container:hover .fullscreen-btn {
-            opacity: 1;
+        .viewers-count {
+            display: flex;
+            align-items: center;
+            margin-right: 15px;
         }
 
-        .fullscreen-btn:hover {
-            background: rgba(122, 82, 196, 0.9);
-            transform: scale(1.1);
+        .live-indicator {
+            width: 8px;
+            height: 8px;
+            background-color: #e91916;
+            border-radius: 50%;
+            margin-right: 5px;
         }
 
-        /* Estilos del chat */
+        /* Chat */
+        .chat-sidebar {
+            width: 340px;
+            background-color: #1f1f23;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            transition: transform 0.3s, width 0.3s;
+        }
+
         .chat-header {
             padding: 15px;
             border-bottom: 1px solid #343437;
@@ -749,80 +198,119 @@
             border: none;
             color: #efeff1;
             cursor: pointer;
-            font-size: 18px;           
+            font-size: 18px;
+            min-width: 40px;
+            min-height: 40px;
         }
 
-        /* ========== CORRECCIONES DE PANTALLA COMPLETA ========== */
-        
-        /* Estados de pantalla completa - CORREGIDOS */
-        body.fullscreen-mode {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            z-index: 10000;
-            background-color: #000;
-            overflow: hidden;
-        }
-
-        body.fullscreen-mode .app-container {
-            width: 100vw;
-            height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 10001;
-            display: flex;
-            flex-direction: row;
-        }
-
-        body.fullscreen-mode .left-column {
-            display: none;
-        }
-
-        body.fullscreen-mode .center-column {
-            padding: 0;
+        .chat-messages {
             flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+        }
+
+        .chat-message {
+            margin-bottom: 10px;
+            padding: 5px;
+            border-radius: 4px;
+        }
+
+        .message-user {
+            font-weight: 600;
+            color: #9147ff;
+        }
+
+        .chat-input-container {
+            padding: 10px;
+            border-top: 1px solid #343437;
+        }
+
+        .chat-input {
+            width: 100%;
+            background-color: #26262c;
+            border: 1px solid #343437;
+            border-radius: 4px;
+            padding: 10px;
+            color: #efeff1;
+        }
+
+        /* Estados de pantalla completa - CORREGIDOS */
+        .fullscreen-mode {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
             height: 100vh;
-            position: relative;
-            z-index: 10002;
+            z-index: 1000;
+            background-color: #000;
+            display: flex;
+        }
+
+        .fullscreen-mode .main-content {
+            flex: 1;
+            padding: 0;
+            margin-right: 0;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            width: calc(100vw - 340px);
+            transition: width 0.3s;
         }
 
-        body.fullscreen-mode .video-container {
-            max-width: none;
+        /* CORRECCIÓN: Cuando el chat está oculto, el main-content ocupa toda la pantalla */
+        .fullscreen-mode.hide-chat .main-content {
+            width: 100vw;
+        }
+
+        .fullscreen-mode .video-container {
+            flex: 1;
+            margin: 0;
+            border-radius: 0;
             width: 100%;
-            height: 100%;
-            padding-top: 0;
-            border-radius: 0;
-            position: relative;
-            margin-bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        body.fullscreen-mode video {
-            border-radius: 0;
+        .fullscreen-mode video {
             height: 100%;
             width: 100%;
             object-fit: contain;
         }
 
-        body.fullscreen-mode .right-column {
-            width: var(--right-column-width);
+        .fullscreen-mode .chat-sidebar {
+            width: 340px;
             height: 100vh;
-            position: relative;
-            z-index: 10003;
+            transition: transform 0.3s, width 0.3s;
         }
 
-        /* Cuando el chat está oculto en pantalla completa */
-        body.fullscreen-mode.hide-chat .right-column {
+        /* CORRECCIÓN: Cuando el chat está oculto, se oculta completamente sin ocupar espacio */
+        .fullscreen-mode.hide-chat .chat-sidebar {
+            transform: translateX(100%);
+            width: 0;
+        }
+
+        .fullscreen-mode .channels-sidebar {
             display: none;
         }
 
-        body.fullscreen-mode.hide-chat .center-column {
-            width: 100vw;
+        .fullscreen-mode .channel-info-bar {
+            display: none;
+        }
+
+        .fullscreen-mode .video-controls {
+            z-index: 1002;
+        }
+
+        /* Estados del chat oculto en modo normal */
+        body.hide-chat-normal .chat-sidebar {
+            position: fixed;
+            right: 0;
+            transform: translateX(100%);
+            width: 0;
+        }
+
+        body.hide-chat-normal .main-content {
+            margin-right: 0;
         }
 
         /* Botón para mostrar chat en pantalla completa */
@@ -830,420 +318,230 @@
             position: fixed;
             right: 20px;
             top: 20px;
-            background: rgba(100, 65, 165, 0.8);
+            background-color: #9147ff;
             color: white;
-            font-size: 18px;
-            border: none;            
-            padding: 12px;
+            border: none;
             border-radius: 4px;
+            padding: 10px 15px;
             cursor: pointer;
-            z-index: 10004;
+            z-index: 1003;
             display: none;
-            transition: all 0.3s;         
+            min-width: 120px;
+            min-height: 40px;
         }
 
-        body.fullscreen-mode.hide-chat .show-chat-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;   
+        .fullscreen-mode.hide-chat .show-chat-btn {
+            display: block;
         }
 
-        /* ========== CORRECCIONES PARA OCULTAR CHAT EN MODO NORMAL ========== */
-        
-        /* Estados del chat oculto en modo normal - CORREGIDOS */
-        body.hide-chat-normal .right-column {
-            display: none;
-        }
-
-        body.hide-chat-normal .center-column {
-            width: 100%;
-        }
-
-        /* Botón para mostrar chat en modo normal - CORREGIDO */
+        /* Botón para mostrar chat en modo normal */
         .show-chat-normal-btn {
             position: fixed;
             right: 20px;
-            top: 20px;
-            background: rgba(100, 65, 165, 0.8);
+            bottom: 20px;
+            background-color: #9147ff;
             color: white;
-            font-size: 18px;
-            border: none; 
-            padding: 12px;
-            border-radius: 4px;       
+            border: none;
+            border-radius: 4px;
+            padding: 10px 15px;
             cursor: pointer;
-            z-index: 10004;
+            z-index: 1003;
             display: none;
-            transition: all 0.3s;        
+            min-width: 120px;
+            min-height: 40px;
         }
 
         body.hide-chat-normal .show-chat-normal-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;    
+            display: block;
         }
 
-        /* Ocultar elementos no necesarios en pantalla completa */
-        body.fullscreen-mode .status,
-        body.fullscreen-mode .channel-info,
-        body.fullscreen-mode .channels-list {
-            display: none !important;
-        }
-
-        /* Responsive para tablets */
-        @media (max-width: 1024px) {
-            :root {
-                --left-column-width: 200px;
-                --right-column-width: 280px;
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .chat-sidebar {
+                width: 300px;
             }
             
-            .offline-placeholder {
-                padding: 15px;
-            }
-    
-            .offline-icon {
-                font-size: 36px;
-                margin-bottom: 12px;
-            }
-    
-            .offline-channel-name {
-                font-size: 20px;
-                margin: 0 0 8px 0;
-            }
-    
-            .offline-status {
-                font-size: 16px;
-                margin-bottom: 6px;
-            }
-    
-            .offline-last-time {
-                font-size: 13px;
-                margin-bottom: 12px;
-            }
-    
-            .offline-btn {
-                padding: 8px 16px;
-                font-size: 16px;
-            }
-            .delete-btn {
-                display: flex;
+            .fullscreen-mode .main-content {
+                width: calc(100vw - 300px);
             }
         }
 
-        /* Responsive para móviles */
-        @media (max-width: 768px) {
-            .app-container {
-                flex-direction: column;
-                height: auto;
-                overflow-y: auto;
+        @media (max-width: 900px) {
+            .channels-sidebar {
+                width: 70px;
             }
             
-            .left-column, .center-column, .right-column {
-                width: 100%;
-            }
-            
-            .left-column {
-                order: 1;
-            }
-            
-            .center-column {
-                order: 2;
-                padding: 10px;
-            }
-            
-            .right-column {
-                order: 3;
-                height: 40vh;
-            }
-            
-            .channels-list {
-                order: 4;
-            }
-            
-            .channel-info {
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                background: rgba(26, 26, 26, 0.9);
-                z-index: 10;
-                margin: 0;
-                border-radius: 0 0 8px 8px;
-            }
-            
-            .channel-info.show {
-                opacity: 1;
-            }
-            
-            .offline-placeholder {
-                padding: 15px;
-            }
-    
-            .offline-icon {
-                font-size: 28px;
-                margin-bottom: 8px;
-            }
-    
-            .offline-channel-name {
-                font-size: 16px;
-                margin: 0 0 6px 0;
-            }
-    
-            .offline-status {
-                font-size: 13px;
-                margin-bottom: 4px;
-            }
-    
-            .offline-last-time {
-                font-size: 11px;
-                margin-bottom: 8px;
-            }
-    
-            .offline-btn {
-                padding: 8px 12px;
-                font-size: 13px;       
-            }
-            .refresh-btn i {
-                margin-right: 0;
-            }
-            .refresh-btn span {
+            .channel-info, .channel-game, .channel-viewers {
                 display: none;
-            }
-            .channel-tab-wrapper .delete-btn {
-                display: flex;
-            }
-            
-            /* Pantalla completa en móviles */
-            body.fullscreen-mode .app-container {
-                flex-direction: column;
-            }
-            
-            body.fullscreen-mode .center-column {
-                height: 70vh;
-            }
-            
-            body.fullscreen-mode .right-column {
-                height: 30vh;
-                width: 100%;
-            }
-            
-            body.fullscreen-mode.hide-chat .right-column {
-                display: none;
-            }
-            
-            body.fullscreen-mode.hide-chat .center-column {
-                height: 100vh;
             }
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Columna izquierda - Controles -->
-        <div class="left-column">
-            <h1><i class="fas fa-play-circle"></i> Stream Player</h1>
-            
-            <div class="controls">
-                <input type="text" id="channelInput" placeholder="Nombre del canal" value="">
-                <button onclick="loadStream()"><i class="fas fa-play"></i> Cargar Stream</button>
-                <button onclick="addToList()"><i class="fas fa-plus"></i> Agregar a la lista</button>
-                <button onclick="refreshStream()"><i class="fas fa-sync-alt"></i> Actualizar</button>
-                <button onclick="autoRefreshToggle()" id="autoRefreshBtn"><i class="fas fa-clock"></i> Auto-Refresh: OFF</button>
-                
-                <!-- Selector de calidad -->
-                <div class="quality-selector">
-                    <button class="quality-btn" id="qualityBtn">
-                        <i class="fas fa-cog"></i> Calidad <i class="fas fa-chevron-down"></i>
-                    </button>
-                    <div class="quality-dropdown" id="qualityDropdown">
-                        <!-- Las opciones de calidad se agregarán aquí dinámicamente -->
+    <!-- Sidebar de canales -->
+    <div class="channels-sidebar">
+        <h2>Canales en vivo</h2>
+        <div class="channel-list">
+            <!-- Los canales se generarán con JavaScript -->
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <div class="video-container">
+            <video id="stream-video" controls>
+                <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4">
+                Tu navegador no soporta el elemento de video.
+            </video>
+            <div class="video-controls">
+                <div>
+                    <button class="control-btn" id="play-pause">⏸️</button>
+                    <button class="control-btn" id="mute">🔊</button>
+                </div>
+                <button class="control-btn" id="fullscreen">⛶</button>
+            </div>
+        </div>
+
+        <div class="channel-info-bar">
+            <div class="channel-avatar-large"></div>
+            <div class="channel-details">
+                <div class="channel-title">¡Jugando Valorant con viewers! 🔥</div>
+                <div class="channel-stream-info">
+                    <div class="viewers-count">
+                        <span class="live-indicator"></span>
+                        <span id="viewers-count">1,245</span> espectadores
                     </div>
+                    <div class="stream-category">Valorant</div>
                 </div>
             </div>
         </div>
-        
-        <!-- Columna central - Video y canales -->
-        <div class="center-column">
-            <div id="status" class="status">Selecciona un canal para comenzar</div>
-            
-            <div class="video-container" id="videoContainer">
-                <video id="videoPlayer" controls style="display: none;"></video>
-                
-                <!-- Controles de video -->
-                <div class="video-controls">
-                    <div>
-                        <button class="control-btn" id="playPauseBtn">⏸️</button>
-                        <button class="control-btn" id="muteBtn">🔊</button>
-                    </div>
-                    <button class="control-btn" id="fullscreenBtn">⛶</button>
-                </div>
-                
-                <!-- Botón de pantalla completa -->
-                <button class="fullscreen-btn" id="fullscreenBtnIcon"><i class="fas fa-expand"></i></button>
-                
-                <div id="offlinePlaceholder" class="offline-placeholder">
-                    <i class="fas fa-play-circle offline-icon"></i>
-                    <div class="offline-channel-name">Stream Player</div>
-                    <div class="offline-status">Selecciona un canal para comenzar</div>
-                    <div class="offline-last-time">Usa el campo de arriba para buscar un canal de Kick</div>
-                    <button class="offline-btn" onclick="document.getElementById('channelInput').focus()">
-                        <i class="fas fa-search"></i> Buscar canal
-                    </button>
-                </div>
-            </div>
-            
-            <div id="channelInfo" class="channel-info"></div>
-            
-            <!-- Lista de canales favoritos -->
-            <div class="channels-list" id="channelsList">
-                <div class="channels-header">
-                    <h2><i class="fas fa-list"></i> Canales Guardados</h2>
-                    <button onclick="updateChannelsStatus()" class="refresh-btn">
-                        <i class="fas fa-sync-alt"></i> <span>Actualizar</span>
-                    </button>
-                </div>
-                <div class="tabs-container" id="tabsContainer">
-                    <!-- Los tabs de canales se generarán aquí dinámicamente -->
-                </div>
-            </div>
+    </div>
+
+    <!-- Chat -->
+    <div class="chat-sidebar">
+        <div class="chat-header">
+            <div class="chat-title">Chat de la transmisión</div>
+            <button class="toggle-chat-btn" id="toggle-chat">◀</button>
         </div>
-        
-        <!-- Columna derecha - Chat -->
-        <div class="right-column">
-            <div class="chat-header">
-                <button class="toggle-chat-btn" id="toggleChatBtn"><i class="fas fa-indent"></i></button>
-                <div class="titulo">Chat</div>              
-            </div>
-            <div id="messages-container">
-                <div id="messages"></div>
-                <button id="scrollBottomBtn"><i class="fas fa-pause"></i>chat en pausa, ir al último mensaje</button>
-            </div>
-            <div class="footer">Kick Chat Viewer — Tizen ✅</div>
+        <div class="chat-messages" id="chat-messages">
+            <!-- Los mensajes se generarán con JavaScript -->
+        </div>
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" placeholder="Enviar un mensaje..." id="chat-input">
         </div>
     </div>
 
     <!-- Botón para mostrar chat en pantalla completa -->
-    <button class="show-chat-btn" id="showChatBtn"><i class="fas fa-outdent"></i></button>
+    <button class="show-chat-btn" id="show-chat">Mostrar Chat</button>
 
     <!-- Botón para mostrar chat en modo normal -->
-    <button class="show-chat-normal-btn" id="showChatNormalBtn"><i class="fas fa-outdent"></i></button>
+    <button class="show-chat-normal-btn" id="show-chat-normal">Mostrar Chat</button>
 
     <script>
-        // Variables globales
-        var hls = null;
-        var autoRefreshInterval = null;
-        var isAutoRefresh = false;
-        var viewersUpdateInterval = null;
-        var currentChannel = '';
-        var currentLevels = [];
-        var channelInfoTimeout = null;
-        
-        // Variables para controles de video
-        var video = document.getElementById('videoPlayer');
-        var fullscreenBtn = document.getElementById('fullscreenBtn');
-        var fullscreenBtnIcon = document.getElementById('fullscreenBtnIcon');
-        var videoContainer = document.getElementById('videoContainer');
-        var toggleChatBtn = document.getElementById('toggleChatBtn');
-        var showChatBtn = document.getElementById('showChatBtn');
-        var showChatNormalBtn = document.getElementById('showChatNormalBtn');
-        var playPauseBtn = document.getElementById('playPauseBtn');
-        var muteBtn = document.getElementById('muteBtn');
-        
+        // Datos simulados
+        const channels = [
+            { name: "StreamerPro", game: "Valorant", viewers: "1.2k", avatarColor: "#9147ff" },
+            { name: "GamerGirl", game: "Just Chatting", viewers: "3.4k", avatarColor: "#ff69b4" },
+            { name: "EliteGamer", game: "Fortnite", viewers: "856", avatarColor: "#00bfff" },
+            { name: "TechMaster", game: "Minecraft", viewers: "2.1k", avatarColor: "#32cd32" },
+            { name: "SpeedRunner", game: "Super Mario Odyssey", viewers: "521", avatarColor: "#ff4500" },
+            { name: "ArtStream", game: "Art", viewers: "789", avatarColor: "#ffd700" },
+            { name: "MusicLover", game: "Music", viewers: "1.5k", avatarColor: "#8a2be2" },
+            { name: "CookingShow", game: "Cooking", viewers: "932", avatarColor: "#ff6347" }
+        ];
+
+        const chatMessages = [
+            { user: "Viewer1", message: "¡Gran jugada!" },
+            { user: "StreamFan", message: "¿Cuándo empieza el torneo?" },
+            { user: "GamerPro", message: "Ese headshot fue increíble" },
+            { user: "NewViewer", message: "Hola a todos, acabo de llegar" },
+            { user: "ChatMod", message: "Por favor mantengan el chat respetuoso" },
+            { user: "Subscriber", message: "¡Me encanta este stream!" },
+            { user: "GamerGirl", message: "¿Alguien más juega Valorant?" },
+            { user: "TechMaster", message: "El setup del streamer es increíble" }
+        ];
+
+        // Elementos DOM
+        const channelList = document.querySelector('.channel-list');
+        const chatMessagesContainer = document.getElementById('chat-messages');
+        const video = document.getElementById('stream-video');
+        const fullscreenBtn = document.getElementById('fullscreen');
+        const toggleChatBtn = document.getElementById('toggle-chat');
+        const showChatBtn = document.getElementById('show-chat');
+        const showChatNormalBtn = document.getElementById('show-chat-normal');
+        const playPauseBtn = document.getElementById('play-pause');
+        const muteBtn = document.getElementById('mute');
+        const chatInput = document.getElementById('chat-input');
+        const viewersCount = document.getElementById('viewers-count');
+
         // Variables de estado
-        var isFullscreen = false;
-        var isChatHidden = false;
-        
-        // Lista de canales guardados
-        var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];
+        let isFullscreen = false;
+        let isChatHidden = false;
 
-        // Inicializar controles de video
-        function initVideoControls() {
-            // Control de reproducción/pausa
-            playPauseBtn.addEventListener('click', function() {
-                if (video.paused) {
-                    video.play();
-                    playPauseBtn.textContent = '⏸️';
-                } else {
-                    video.pause();
-                    playPauseBtn.textContent = '▶️';
-                }
-            });
-            
-            // Control de silencio
-            muteBtn.addEventListener('click', function() {
-                if (video.muted) {
-                    video.muted = false;
-                    muteBtn.textContent = '🔊';
-                } else {
-                    video.muted = true;
-                    muteBtn.textContent = '🔇';
-                }
-            });
-            
-            // Actualizar estado de los botones según el estado del video
-            video.addEventListener('play', function() {
-                playPauseBtn.textContent = '⏸️';
-            });
-            
-            video.addEventListener('pause', function() {
-                playPauseBtn.textContent = '▶️';
-            });
-            
-            // Configurar pantalla completa
-            setupFullscreen();
-            
-            // Configurar chat
-            setupChat();
+        // Generar canales
+        channels.forEach(channel => {
+            const channelItem = document.createElement('div');
+            channelItem.className = 'channel-item';
+            channelItem.innerHTML = `
+                <div class="channel-avatar" style="background-color: ${channel.avatarColor};"></div>
+                <div class="channel-info">
+                    <div class="channel-name">${channel.name}</div>
+                    <div class="channel-game">${channel.game}</div>
+                </div>
+                <div class="channel-viewers">${channel.viewers}</div>
+            `;
+            channelList.appendChild(channelItem);
+        });
+
+        // Generar mensajes del chat
+        function addChatMessage(user, message) {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'chat-message';
+            messageElement.innerHTML = `
+                <span class="message-user">${user}:</span> ${message}
+            `;
+            chatMessagesContainer.appendChild(messageElement);
+            chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
         }
 
-        // Función para configurar pantalla completa
-        function setupFullscreen() {
-            // Botón de pantalla completa
-            fullscreenBtn.addEventListener('click', function() {
-                toggleFullscreen();
-            });
+        // Cargar mensajes iniciales
+        chatMessages.forEach(msg => {
+            addChatMessage(msg.user, msg.message);
+        });
+
+        // Simular nuevos mensajes del chat
+        setInterval(() => {
+            const users = ['Viewer123', 'GamerFan', 'StreamLover', 'NewSub', 'ChatMember'];
+            const messages = [
+                '¡Increíble!',
+                '¿Alguien más está emocionado?',
+                'Gran contenido como siempre',
+                '¿Qué configuración usas?',
+                '¡Felicidades por los 1000 seguidores!',
+                '¿Puedes explicar esa estrategia?',
+                'El chat está muy activo hoy',
+                'Me encanta esta comunidad'
+            ];
             
-            // Botón de pantalla completa con icono
-            fullscreenBtnIcon.addEventListener('click', function() {
-                toggleFullscreen();
-            });
+            const randomUser = users[Math.floor(Math.random() * users.length)];
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
             
-            // También permitir pantalla completa con doble clic en el video
-            videoContainer.addEventListener('dblclick', function() {
-                toggleFullscreen();
-            });
-            
-            // Manejar cambios en el estado de pantalla completa
-            function handleFullscreenChange() {
-                if (document.fullscreenElement || document.webkitFullscreenElement || 
-                    document.mozFullScreenElement || document.msFullscreenElement) {
-                    // Entramos en pantalla completa
-                    document.body.classList.add('fullscreen-mode');
-                    isFullscreen = true;
-                    
-                    console.log('Modo pantalla completa activado');
-                } else {
-                    // Salimos de pantalla completa
-                    document.body.classList.remove('fullscreen-mode');
-                    document.body.classList.remove('hide-chat');
-                    isFullscreen = false;
-                    
-                    console.log('Modo pantalla completa desactivado');
-                }
-            }
-            
-            // Escuchar eventos de cambio de pantalla completa
-            document.addEventListener('fullscreenchange', handleFullscreenChange);
-            document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-        }
-        
-        // Función para alternar pantalla completa
+            addChatMessage(randomUser, randomMessage);
+        }, 5000);
+
+        // Simular cambio de viewers
+        setInterval(() => {
+            const currentViewers = parseInt(viewersCount.textContent.replace(/,/g, ''));
+            const change = Math.floor(Math.random() * 50) - 25; // Cambio entre -25 y +25
+            const newViewers = Math.max(100, currentViewers + change);
+            viewersCount.textContent = newViewers.toLocaleString();
+        }, 10000);
+
+        // Funcionalidad de pantalla completa compatible con Tizen
+        fullscreenBtn.addEventListener('click', toggleFullscreen);
+
         function toggleFullscreen() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement && 
-                !document.mozFullScreenElement && !document.msFullscreenElement) {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement) {
                 // Entrar en pantalla completa
                 if (document.documentElement.requestFullscreen) {
                     document.documentElement.requestFullscreen();
@@ -1251,8 +549,6 @@
                     document.documentElement.webkitRequestFullscreen();
                 } else if (document.documentElement.mozRequestFullScreen) {
                     document.documentElement.mozRequestFullScreen();
-                } else if (document.documentElement.msRequestFullscreen) {
-                    document.documentElement.msRequestFullscreen();
                 }
             } else {
                 // Salir de pantalla completa
@@ -1262,1289 +558,118 @@
                     document.webkitExitFullscreen();
                 } else if (document.mozCancelFullScreen) {
                     document.mozCancelFullScreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
                 }
             }
         }
-        
-        // Función para configurar el chat
-        function setupChat() {
-            // Ocultar/mostrar chat (funciona en ambos modos)
-            toggleChatBtn.addEventListener('click', function() {
-                if (isFullscreen) {
-                    // En pantalla completa
-                    document.body.classList.toggle('hide-chat');
-                    console.log('Chat en pantalla completa:', document.body.classList.contains('hide-chat') ? 'oculto' : 'visible');
-                } else {
-                    // Modo normal
-                    document.body.classList.toggle('hide-chat-normal');
-                    console.log('Chat en modo normal:', document.body.classList.contains('hide-chat-normal') ? 'oculto' : 'visible');
+
+        // Manejar cambios en el estado de pantalla completa
+        function handleFullscreenChange() {
+            if (document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement) {
+                document.body.classList.add('fullscreen-mode');
+                isFullscreen = true;
+                // Mantener el estado del chat al entrar en pantalla completa
+                if (document.body.classList.contains('hide-chat-normal')) {
+                    document.body.classList.add('hide-chat');
                 }
-            });
-            
-            // Mostrar chat cuando está oculto en pantalla completa
-            showChatBtn.addEventListener('click', function() {
+            } else {
+                document.body.classList.remove('fullscreen-mode');
                 document.body.classList.remove('hide-chat');
-                console.log('Mostrando chat desde botón en pantalla completa');
-            });
-            
-            // Mostrar chat cuando está oculto en modo normal
-            showChatNormalBtn.addEventListener('click', function() {
-                document.body.classList.remove('hide-chat-normal');
-                console.log('Mostrando chat desde botón en modo normal');
-            });
-        }
-
-        // Resto del código permanece igual...
-
-        // Función para hacer scroll suave al contenedor de video
-        function scrollToVideoContainer() {
-            const centerColumn = document.querySelector('.center-column');
-            if (centerColumn) {
-                centerColumn.scrollTo({ 
-                    top: 0,
-                    behavior: 'smooth',
-                    block: 'start'
-                });
-            }
-        }
-
-        // Función para generar el verified badge si el canal está verificado
-        function getVerifiedBadge(verified) {
-            if (verified) {
-                return '<img src="https://raw.githubusercontent.com/j4m1r98/Utilidades/refs/heads/main/verified-badge.svg" class="verified-badge" alt="Verified">';
-            }
-            return '';
-        }
-
-        // Función makeRequest
-        function makeRequest(url) {
-            return new Promise(function(resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', url, true);
-                xhr.onload = function() {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            resolve(data);
-                        } catch (e) {
-                            reject(new Error('Error parsing JSON'));
-                        }
-                    } else {
-                        reject(new Error('HTTP error: ' + xhr.status));
-                    }
-                };
-                xhr.onerror = function() {
-                    reject(new Error('Network error'));
-                };
-                xhr.send();
-            });
-        }
-
-        // Función getLastLiveText
-        function getLastLiveText(username) {
-            return makeRequest('https://kick.com/api/v1/channels/' + username)
-                .then(function(data) {
-                    if (Array.isArray(data.previous_livestreams) && data.previous_livestreams.length > 0) {
-                        var last = data.previous_livestreams[0];
-                        var startMs = Date.parse((last.created_at || '') + "Z");
-                        var durMs = Number(last.duration);
-                        if (!isNaN(startMs) && !isNaN(durMs) && durMs > 0) {
-                            var endMs = startMs + durMs;
-                            var agoMs = Date.now() - endMs;
-                            if (agoMs > 0) {
-                                var totalSeconds = Math.floor(agoMs / 1000);
-                                if (totalSeconds < 60) {
-                                    return "menos de un min";
-                                }
-                                var totalMinutes = Math.floor(totalSeconds / 60);
-                                var totalHours = Math.floor(totalMinutes / 60);
-                                var days = Math.floor(totalHours / 24);
-                                var hours = totalHours % 24;
-                                var minutes = totalMinutes % 60;
-                                var parts = [];
-                                if (days > 0) {
-                                    parts.push(days + ' día' + (days !== 1 ? 's' : ''));
-                                }
-                                if (hours > 0) {
-                                    parts.push(hours + ' h');
-                                }
-                                if (minutes > 0 && days === 0) {
-                                    parts.push(minutes + ' min');
-                                }
-                                if (parts.length === 0) {
-                                    return "menos de un min";
-                                }
-                                return 'hace ' + parts.join(' ');
-                            }
-                        }
-                    }
-                    return "Nunca ha estado en vivo";
-                })
-                .catch(function(e) {
-                    console.warn('Error al obtener último live de ' + username + ':', e);
-                    return "No disponible";
-                });
-        }
-
-        // Nueva función para obtener datos de la API directa de Kick
-        function getStreamFromKickAPI(channel) {
-            return new Promise(function(resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('GET', 'https://kick.com/api/v2/channels/' + encodeURIComponent(channel), true);
-                xhr.onload = function() {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            var data = JSON.parse(xhr.responseText);
-                            
-                            // Mapear los datos según la estructura requerida
-                            var streamData = {
-                                playback_url: data.playback_url,
-                                channel_info: {
-                                    name: data.user ? data.user.username : channel,
-                                    title: data.livestream ? data.livestream.session_title : '',
-                                    profile_pic: data.user ? data.user.profile_pic : '',
-                                    is_live: data.livestream ? data.livestream.is_live : false,
-                                    viewer_count: data.livestream ? data.livestream.viewer_count : 0,
-                                    verified: data.verified || false
-                                }
-                            };
-                            
-                            resolve(streamData);
-                        } catch (e) {
-                            reject(new Error('Error parsing JSON from Kick API'));
-                        }
-                    } else {
-                        reject(new Error('Error del Kick API: ' + xhr.status));
-                    }
-                };
-                xhr.onerror = function() {
-                    reject(new Error('Network error when connecting to Kick API'));
-                };
-                xhr.send();
-            });
-        }
-
-        function loadStream() {
-            var channelName = document.getElementById('channelInput').value.trim();
-            if (!channelName) {
-                updateStatus('<i class="fas fa-exclamation-triangle"></i> Ingresa un nombre de canal', 'error');
-                return;
-            }
-            
-            // Limpiar intervalos anteriores y cualquier reproducción en curso
-            clearInterval(viewersUpdateInterval);
-            
-            // Limpiar el video completamente antes de empezar
-            var video = document.getElementById('videoPlayer');
-            var offlinePlaceholder = document.getElementById('offlinePlaceholder');
-            video.pause();
-            video.src = '';
-            video.load();
-            
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-            
-            currentChannel = channelName;
-            scrollToVideoContainer();
-
-            updateStatus('<i class="fas fa-search"></i> Buscando stream...', 'loading');
-            
-            // Conectar al chat del canal
-            joinChannel(channelName);
-            
-            // Usar la API directa de Kick para obtener el stream
-            getStreamFromKickAPI(channelName)
-                .then(function(streamData) {
-                    if (!streamData) {
-                        throw new Error('No se pudo obtener información del canal');
-                    }
-                    
-                    // Verificar si el canal está online - SI ESTÁ OFFLINE, SALIR INMEDIATAMENTE
-                    if (!streamData.channel_info.is_live) {
-                        return showOfflinePlaceholder(streamData.channel_info)
-                            .then(function() {
-                                updateStatus('<i class="fas fa-user-slash"></i> El canal está offline', 'error');
-                            });
-                    }
-                    
-                    if (!streamData.playback_url) {
-                        throw new Error('No se pudo obtener el stream del Kick API');
-                    }
-                    
-                    console.log('URL del stream obtenida:', streamData.playback_url);
-                    updateStatus('<i class="fas fa-check"></i> Stream encontrado, cargando video...', 'success');
-                    
-                    // PRIMERO: Intentar con el enlace directo SIN proxy
-                    return attemptDirectPlay(streamData.playback_url)
-                        .then(function(success) {
-                            if (success) {
-                                // Éxito con enlace directo
-                                updateChannelInfo(streamData.channel_info);
-                                startViewersUpdate(channelName);
-                                return;
-                            }
-                            
-                            // SEGUNDO: Si falla el directo, intentar con proxies
-                            updateStatus('<i class="fas fa-redo"></i> Falló enlace directo, probando con proxy...', 'loading');
-                            return getProxiedStreamUrl(streamData.playback_url)
-                                .then(function(proxiedStreamUrl) {
-                                    playStream(proxiedStreamUrl);
-                                    updateChannelInfo(streamData.channel_info);
-                                    startViewersUpdate(channelName);
-                                });
-                        });
-                })
-                .catch(function(error) {
-                    updateStatus('<i class="fas fa-exclamation-circle"></i> Error: ' + error.message, 'error');
-                    console.error('Error:', error);
-                });
-        }
-
-        // Nueva función para intentar reproducción directa
-        function attemptDirectPlay(streamUrl) {
-            return new Promise(function(resolve) {
-                var video = document.getElementById('videoPlayer');
-                var offlinePlaceholder = document.getElementById('offlinePlaceholder');
+                isFullscreen = false;
+                isChatHidden = false;
                 
-                // Mostrar video y ocultar placeholder
-                video.style.display = 'block';
-                offlinePlaceholder.style.display = 'none';
-                
-                // Detener HLS anterior
-                if (hls) {
-                    hls.destroy();
-                    hls = null;
-                }
-                
-                console.log('Intentando reproducción directa:', streamUrl);
-                
-                // Limpiar fuente anterior
-                video.src = '';
-                video.load();
-                
-                var directPlaySuccess = false;
-                var timeoutId;
-                
-                function cleanup() {
-                    clearTimeout(timeoutId);
-                    video.removeEventListener('loadedmetadata', onSuccess);
-                    video.removeEventListener('error', onError);
-                    video.removeEventListener('canplay', onSuccess);
-                }
-                
-                function onSuccess() {
-                    if (directPlaySuccess) return;
-                    directPlaySuccess = true;
-                    cleanup();
-                    console.log('Reproducción directa exitosa');
-                    updateStatus('<i class="fas fa-play"></i> Reproduciendo (directo)', 'success');
-                    resolve(true);
-                }
-                
-                function onError() {
-                    if (directPlaySuccess) return;
-                    cleanup();
-                    console.log('Reproducción directa falló');
-                    resolve(false);
-                }
-                
-                // Configurar event listeners
-                video.addEventListener('loadedmetadata', onSuccess);
-                video.addEventListener('canplay', onSuccess);
-                video.addEventListener('error', onError);
-                
-                // Timeout después de 10 segundos
-                timeoutId = setTimeout(function() {
-                    if (!directPlaySuccess) {
-                        console.log('Timeout en reproducción directa');
-                        onError();
-                    }
-                }, 10000);
-                
-                // Intentar reproducir con HLS.js primero
-                if (window.Hls && Hls.isSupported()) {
-                    hls = new Hls({
-                        enableWorker: false,
-                        lowLatencyMode: true,
-                        backBufferLength: 90
-                    });
-                    
-                    hls.loadSource(streamUrl);
-                    hls.attachMedia(video);
-                    
-                    hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                        console.log('Manifiesto HLS cargado correctamente (directo)');
-                        updateQualityDropdown();
-                        video.play().catch(function(e) {
-                            console.log('Auto-play bloqueado (directo):', e);
-                        });
-                        onSuccess();
-                    });
-                    
-                    hls.on(Hls.Events.LEVEL_LOADED, function(event, data) {
-                        console.log('Calidad cargada (directo)');
-                    });
-                    
-                    hls.on(Hls.Events.ERROR, function(event, data) {
-                        console.error('Error HLS (directo):', data);
-                        if (data.fatal && !directPlaySuccess) {
-                            hls.destroy();
-                            onError();
-                        }
-                    });
-                    
-                } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                    // Safari native HLS support
-                    console.log('Usando HLS nativo (directo)');
-                    video.src = streamUrl;
-                    video.addEventListener('loadedmetadata', function() {
-                        console.log('Metadata cargada (directo)');
-                        video.play().catch(function(e) {
-                            console.log('Auto-play bloqueado (directo):', e);
-                        });
-                    });
+                // Restaurar el estado del chat en modo normal
+                if (document.body.classList.contains('hide-chat-normal')) {
+                    toggleChatBtn.textContent = '▶';
                 } else {
-                    console.log('HLS no soportado, fallando a proxy');
-                    onError();
+                    toggleChatBtn.textContent = '◀';
                 }
-            });
-        }
-
-        function getProxiedStreamUrl(streamUrl) {
-            // Usar un proxy CORS público para evitar bloqueos
-            var proxyUrls = [
-                'https://procsyurlstrm.j4m1r-98.workers.dev/?url=' + encodeURIComponent(streamUrl),
-                'https://corsproxy.io/?' + encodeURIComponent(streamUrl),
-                'https://api.allorigins.win/raw?url=' + encodeURIComponent(streamUrl),
-                'https://cors-anywhere.herokuapp.com/' + streamUrl
-            ];
-            
-            // Probar cada proxy secuencialmente
-            function tryProxy(index) {
-                if (index >= proxyUrls.length) {
-                    return Promise.reject(new Error('No se pudo encontrar un proxy funcionando'));
-                }
-                
-                var proxyUrl = proxyUrls[index];
-                console.log('Probando proxy:', proxyUrl);
-                
-                return testProxyUrl(proxyUrl)
-                    .then(function() {
-                        console.log('Proxy funcionando:', proxyUrl);
-                        return proxyUrl;
-                    })
-                    .catch(function(error) {
-                        console.log('Proxy falló:', proxyUrl, error);
-                        return tryProxy(index + 1);
-                    });
             }
-            
-            return tryProxy(0);
         }
 
-        function testProxyUrl(proxyUrl) {
-            return new Promise(function(resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('HEAD', proxyUrl, true);
-                xhr.onload = function() {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        resolve(true);
-                    } else {
-                        reject(new Error('HTTP error: ' + xhr.status));
-                    }
-                };
-                xhr.onerror = function() {
-                    reject(new Error('Network error'));
-                };
-                xhr.send();
-            });
-        }
+        // Escuchar eventos de cambio de pantalla completa
+        document.addEventListener('fullscreenchange', handleFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
 
-        function playStream(url) {
-            var video = document.getElementById('videoPlayer');
-            var offlinePlaceholder = document.getElementById('offlinePlaceholder');
-            
-            // Mostrar video y ocultar placeholder
-            video.style.display = 'block';
-            offlinePlaceholder.style.display = 'none';
-            
-            // Detener HLS anterior
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-            
-            console.log('Reproduciendo a través de proxy:', url);
-            
-            // Limpiar fuente anterior
-            video.src = '';
-            video.load();
-            
-            if (window.Hls && Hls.isSupported()) {
-                hls = new Hls({
-                    enableWorker: false,
-                    lowLatencyMode: true,
-                    backBufferLength: 90
-                });
-                
-                hls.loadSource(url);
-                hls.attachMedia(video);
-                
-                hls.on(Hls.Events.MANIFEST_PARSED, function() {
-                    console.log('Manifiesto HLS cargado correctamente (proxy)');
-                    
-                    // Obtener las calidades disponibles y actualizar el dropdown
-                    updateQualityDropdown();
-                    
-                    video.play().catch(function(e) {
-                        console.log('Auto-play bloqueado (proxy):', e);
-                        updateStatus('<i class="fas fa-pause"></i> Click en play para iniciar', 'loading');
-                    });
-                });
-                
-                hls.on(Hls.Events.LEVEL_LOADED, function(event, data) {
-                    console.log('Calidad cargada (proxy)');
-                    updateStatus('<i class="fas fa-play"></i> Reproduciendo (proxy)', 'success');
-                });
-                
-                hls.on(Hls.Events.ERROR, function(event, data) {
-                    console.error('Error HLS (proxy):', data);
-                    
-                    if (data.fatal) {
-                        switch(data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.log('Error de red, intentando recuperar...');
-                                updateStatus('<i class="fas fa-redo"></i> Error de red, reconectando...', 'error');
-                                setTimeout(function() {
-                                    if (hls) hls.startLoad();
-                                }, 2000);
-                                break;
-                            default:
-                                console.log('Error fatal, recargando stream...');
-                                updateStatus('<i class="fas fa-exclamation-circle"></i> Error del stream, recargando...', 'error');
-                                setTimeout(loadStream, 3000);
-                                break;
-                        }
-                    }
-                });
-                
-            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-                // Safari native HLS support
-                console.log('Usando HLS nativo (proxy)');
-                video.src = url;
-                video.addEventListener('loadedmetadata', function() {
-                    console.log('Metadata cargada (proxy)');
-                    video.play().catch(function(e) {
-                        console.log('Auto-play bloqueado (proxy):', e);
-                        updateStatus('<i class="fas fa-pause"></i> Click en play para iniciar', 'loading');
-                    });
-                });
+        // Ocultar/mostrar chat (funciona en ambos modos)
+        toggleChatBtn.addEventListener('click', () => {
+            if (isFullscreen) {
+                isChatHidden = !isChatHidden;
+                document.body.classList.toggle('hide-chat', isChatHidden);
+                toggleChatBtn.textContent = isChatHidden ? '▶' : '◀';
             } else {
-                updateStatus('<i class="fas fa-exclamation-circle"></i> HLS no soportado en este navegador', 'error');
-                return;
-            }
-            
-            // Event listeners para el elemento video - SOLO cuando el canal está online
-            video.addEventListener('waiting', function() {
-                updateStatus('<i class="fas fa-hourglass-half"></i> Buffering...', 'loading');
-            });
-            
-            video.addEventListener('playing', function() {
-                updateStatus('<i class="fas fa-play"></i> Reproduciendo', 'success');
-            });
-        }
-
-        // Función para actualizar el dropdown de calidades
-        function updateQualityDropdown() {
-            if (!hls || !hls.levels || hls.levels.length === 0) {
-                console.log('No hay niveles de calidad disponibles');
-                return;
-            }
-            
-            var qualityDropdown = document.getElementById('qualityDropdown');
-            currentLevels = hls.levels;
-            
-            // Limpiar dropdown
-            qualityDropdown.innerHTML = '';
-            
-            // Agregar opción "Auto"
-            var autoOption = document.createElement('div');
-            autoOption.className = 'quality-option';
-            autoOption.textContent = 'Auto';
-            autoOption.setAttribute('data-level', '-1');
-            if (hls.currentLevel === -1) {
-                autoOption.classList.add('active');
-            }
-            autoOption.onclick = function() {
-                changeQuality(-1);
-            };
-            qualityDropdown.appendChild(autoOption);
-            
-            // Agregar opciones para cada calidad disponible
-            for (var i = 0; i < currentLevels.length; i++) {
-                var level = currentLevels[i];
-                var label = getQualityLabel(level);
-                
-                var option = document.createElement('div');
-                option.className = 'quality-option';
-                option.textContent = label;
-                option.setAttribute('data-level', i.toString());
-                if (hls.currentLevel === i) {
-                    option.classList.add('active');
-                }
-                option.onclick = (function(levelIndex) {
-                    return function() {
-                        changeQuality(levelIndex);
-                    };
-                })(i);
-                
-                qualityDropdown.appendChild(option);
-            }
-        }
-
-        // Función para obtener la etiqueta de calidad
-        function getQualityLabel(level) {
-            if (level.height) {
-                return level.height + 'p';
-            } else if (level.name) {
-                return level.name;
-            } else if (level.bitrate) {
-                return Math.round(level.bitrate / 1000) + ' kbps';
-            } else {
-                return 'Nivel ' + level.id;
-            }
-        }
-
-        // Función para cambiar la calidad
-        function changeQuality(levelIndex) {
-            if (!hls) return;
-            
-            hls.currentLevel = levelIndex;
-            
-            // Actualizar clases activas en el dropdown
-            var options = document.querySelectorAll('.quality-option');
-            for (var i = 0; i < options.length; i++) {
-                options[i].classList.remove('active');
-                if (parseInt(options[i].getAttribute('data-level')) === levelIndex) {
-                    options[i].classList.add('active');
-                }
-            }
-            
-            // Cerrar el dropdown
-            document.getElementById('qualityDropdown').classList.remove('show');
-            
-            console.log('Calidad cambiada a nivel: ' + levelIndex);
-        }
-
-        // Función para mostrar/ocultar el dropdown de calidad
-        function toggleQualityDropdown() {
-            var dropdown = document.getElementById('qualityDropdown');
-            dropdown.classList.toggle('show');
-        }
-
-        function showOfflinePlaceholder(channelInfo) {
-            // Detener cualquier reproducción en curso
-            var video = document.getElementById('videoPlayer');
-            var offlinePlaceholder = document.getElementById('offlinePlaceholder');
-            
-            video.pause();
-            video.src = '';
-            video.load();
-            
-            // Ocultar video y mostrar placeholder
-            video.style.display = 'none';
-            offlinePlaceholder.style.display = 'flex';
-            
-            // Limpiar intervalos de actualización
-            clearInterval(viewersUpdateInterval);
-            
-            // Obtener información del último stream usando la misma función
-            return getLastLiveText(channelInfo.name)
-                .then(function(lastLiveText) {
-                    // Actualizar información del canal
-                    updateOfflineChannelInfo(channelInfo, lastLiveText);
-
-                    // Actualizar el placeholder con toda la información
-            offlinePlaceholder.innerHTML = 
-                '<i class="fas fa-user-slash offline-icon"></i>' +
-                '<div class="offline-channel-name">' + (channelInfo.name || 'Canal') + '</div>' +
-                '<div class="offline-status">Está offline en este momento</div>' +
-                '<div class="offline-last-time">Última vez: ' + lastLiveText + '</div>' +
-                '<button class="offline-btn" onclick="window.open(\'https://kick.com/' + channelInfo.name + '\', \'_blank\')">' +
-                    '<i class="fas fa-external-link-alt"></i> Visitar canal' +
-                '</button>';
-                });
-        }
-
-        function refreshStream() {
-            console.log('Actualización manual del stream');
-            loadStream();
-        }
-
-        function autoRefreshToggle() {
-            var btn = document.getElementById('autoRefreshBtn');
-            
-            if (isAutoRefresh) {
-                clearInterval(autoRefreshInterval);
-                isAutoRefresh = false;
-                btn.innerHTML = '<i class="fas fa-clock"></i> Auto-Refresh: OFF';
-                updateStatus('Auto-refresh desactivado', 'success');
-            } else {
-                autoRefreshInterval = setInterval(refreshStream, 20000); // Cada 20 segundos
-                isAutoRefresh = true;
-                btn.innerHTML = '<i class="fas fa-clock"></i> Auto-Refresh: ON';
-                updateStatus('Auto-refresh activado (cada 20s)', 'success');
-            }
-        }
-
-        function updateStatus(message, type) {
-            var status = document.getElementById('status');
-            status.innerHTML = message;
-            status.className = 'status ' + type;
-        }
-
-        function updateChannelInfo(info) {
-            var container = document.getElementById('channelInfo');
-            container.style.display = 'block';
-            if (info && info.name) {
-                var profilePic = info.profile_pic ? 
-                    '<img src="' + info.profile_pic + '" class="channel-profile-pic" alt="' + info.name + '">' :
-                    '<div class="profile-placeholder"><i class="fas fa-user"></i></div>';
-                
-                container.innerHTML = 
-                    '<div class="channel-main-info">' +
-                        '<div class="channel-profile-container">' +
-                            profilePic +
-                            '<div class="channel-text-info">' +
-                                '<div class="channel-name-line">' +
-                                    '<div class="channel-name">' + info.name + getVerifiedBadge(info.verified) + '</div>' +
-                                    '<div class="channel-viewers">' +
-                                        '<i class="fas fa-users"></i>' +
-                                        '<span class="viewers-count">' + (info.viewer_count || 0) + '</span>' +
-                                    '</div>' +
-                                '</div>' +
-                                '<div class="channel-title">' + (info.title || 'Sin título') + '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-                    
-                // En móvil, mostrar la información del canal temporalmente
-                if (window.innerWidth <= 768) {
-                    container.classList.add('show');
-                    // Programar para ocultar después de 5 segundos
-                    clearTimeout(channelInfoTimeout);
-                    channelInfoTimeout = setTimeout(function() {
-                        container.classList.remove('show');
-                    }, 5000);
-                }
-            } else {
-                container.innerHTML = '<p>Información del canal no disponible</p>';
-            }
-        }
-
-        function updateOfflineChannelInfo(info, lastLiveText) {
-            var container = document.getElementById('channelInfo');
-            container.style.display = 'block';
-            if (info && info.name) {
-                var profilePic = info.profile_pic ? 
-                    '<img src="' + info.profile_pic + '" class="channel-profile-pic" alt="' + info.name + '">' :
-                    '<div class="profile-placeholder"><i class="fas fa-user"></i></div>';
-                
-                container.innerHTML = 
-                    '<div class="channel-main-info">' +
-                        '<div class="channel-profile-container">' +
-                            profilePic +
-                            '<div class="channel-text-info">' +
-                                '<div class="channel-name-line">' +
-                                    '<div class="channel-name">' + info.name + getVerifiedBadge(info.verified) + '</div>' +
-                                                                        
-                                // Viewer count oculto cuando está offline
-                                '</div>' +
-                                '<div class="offline-time">Última vez en vivo ' + lastLiveText + '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-                    
-                // En móvil, mostrar la información del canal temporalmente
-                if (window.innerWidth <= 768) {
-                    container.classList.add('show');
-                    // Programar para ocultar después de 5 segundos
-                    clearTimeout(channelInfoTimeout);
-                    channelInfoTimeout = setTimeout(function() {
-                        container.classList.remove('show');
-                    }, 5000);
-                }
-            } else {
-                container.innerHTML = '<p>Información del canal no disponible</p>';
-            }
-        }
-
-        // Función para actualizar solo el viewers count
-        function updateViewersCount(channelName) {
-            getStreamFromKickAPI(channelName)
-                .then(function(streamData) {
-                    if (streamData && streamData.channel_info) {
-                        var viewersCount = streamData.channel_info.viewer_count || 0;
-                        var viewersElement = document.querySelector('.viewers-count');
-                        if (viewersElement) {
-                            viewersElement.textContent = viewersCount;
-                        }
-                        
-                        // Si el canal está offline, detener la actualización
-                        if (!streamData.channel_info.is_live) {
-                            clearInterval(viewersUpdateInterval);
-                            updateStatus('<i class="fas fa-eye-slash"></i> El canal está ahora offline', 'error');
-                            
-                            // Limpiar el video
-                            var video = document.getElementById('videoPlayer');
-                            video.pause();
-                            video.src = '';
-                            video.load();
-                            
-                            return showOfflinePlaceholder(streamData.channel_info);
-                        }
-                    }
-                })
-                .catch(function(error) {
-                    console.error('Error actualizando viewers count:', error);
-                });
-        }
-
-        // Iniciar la actualización automática del viewers count
-        function startViewersUpdate(channelName) {
-            // Limpiar cualquier intervalo anterior
-            clearInterval(viewersUpdateInterval);
-            
-            // Actualizar cada minuto (60000 ms)
-            viewersUpdateInterval = setInterval(function() {
-                updateViewersCount(channelName);
-            }, 60000);
-            
-            console.log('Iniciando actualización automática de viewers cada minuto');
-        }
-
-        // Función para agregar canal a la lista
-        function addToList() {
-            var channelName = document.getElementById('channelInput').value.trim();
-            if (!channelName) {
-                updateStatus('<i class="fas fa-exclamation-triangle"></i> Ingresa un nombre de canal', 'error');
-                return;
-            }
-            
-            // Verificar si el canal ya está en la lista
-            var alreadyExists = savedChannels.some(function(channel) {
-                return channel.name === channelName;
-            });
-            
-            if (alreadyExists) {
-                updateStatus('<i class="fas fa-info-circle"></i> Este canal ya está en tu lista', 'loading');
-                return;
-            }
-            
-            updateStatus('<i class="fas fa-search"></i> Obteniendo información del canal...', 'loading');
-            
-            getStreamFromKickAPI(channelName)
-                .then(function(streamData) {
-                    if (!streamData || !streamData.channel_info) {
-                        throw new Error('No se pudo obtener información del canal');
-                    }
-                    
-                    var channelInfo = streamData.channel_info;
-                    var newChannel = {
-                        name: channelName,
-                        profile_pic: channelInfo.profile_pic || '',
-                        displayName: channelInfo.name || channelName,
-                        verified: channelInfo.verified || false
-                    };
-                    
-                    savedChannels.push(newChannel);
-                    localStorage.setItem('savedChannels', JSON.stringify(savedChannels));
-                    updateChannelsStatus();
-                    
-                    updateStatus('<i class="fas fa-check"></i> Canal agregado a la lista', 'success');
-                })
-                .catch(function(error) {
-                    updateStatus('<i class="fas fa-exclamation-circle"></i> Error al agregar canal: ' + error.message, 'error');
-                    console.error('Error:', error);
-                });
-        }
-
-        // Función para cargar un canal desde la lista
-        function loadChannel(channelName) {
-            document.getElementById('channelInput').value = channelName;
-            loadStream();
-            
-            // Hacer scroll al contenedor de video
-            scrollToVideoContainer();
-        }
-
-        // Función para eliminar un canal de la lista
-        function removeChannel(channelName) {
-            savedChannels = savedChannels.filter(function(channel) {
-                return channel.name !== channelName;
-            });
-            localStorage.setItem('savedChannels', JSON.stringify(savedChannels));
-            updateChannelsStatus();
-            updateStatus('<i class="fas fa-trash-alt"></i> Canal eliminado de la lista', 'success');
-        }
-
-        // Función para obtener el estado de un canal
-        function getChannelStatus(channelName) {
-            return getStreamFromKickAPI(channelName)
-                .then(function(streamData) {
-                    if (!streamData || !streamData.channel_info) {
-                        throw new Error('No se pudo obtener información del canal');
-                    }
-                    
-                    return {
-                        is_live: streamData.channel_info.is_live,
-                        viewer_count: streamData.channel_info.viewer_count || 0,
-                        verified: streamData.channel_info.verified || false
-                    };
-                })
-                .catch(function(error) {
-                    console.error('Error obteniendo estado del canal:', error);
-                    return { is_live: false, viewer_count: 0, verified: false };
-                });
-        }
-
-        // Función para renderizar la lista de canales
-        function renderChannelsList() {
-            var tabsContainer = document.getElementById('tabsContainer');
-            
-            if (savedChannels.length === 0) {
-                tabsContainer.innerHTML = '<div class="empty-list"><i class="fas fa-inbox"></i> No hay canales guardados</div>';
-                return;
-            }
-            
-            // Mostrar estado de carga temporal
-            tabsContainer.innerHTML = '<div class="empty-list"><i class="fas fa-spinner fa-spin"></i> Cargando estados...</div>';
-            
-            // Actualizar estados (esto ahora ordenará automáticamente)
-            updateChannelsStatus();
-        }
-
-        // Función para actualizar el estado de todos los canales en la lista
-        function updateChannelsStatus() {
-            var tabsContainer = document.getElementById('tabsContainer');
-            var refreshBtn = document.querySelector('.refresh-btn');
-            
-            // Mostrar estado de carga
-            tabsContainer.innerHTML = '<div class="empty-list"><i class="fas fa-spinner fa-spin"></i> Actualizando estados...</div>';
-            
-            // Deshabilitar el botón temporalmente y cambiar icono
-            if (refreshBtn) {
-                refreshBtn.disabled = true;
-                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Actualizando...</span>';
-            }
-            
-            var promises = [];
-            for (var i = 0; i < savedChannels.length; i++) {
-                (function(channel) {
-                    promises.push(
-                        getChannelStatus(channel.name)
-                            .then(function(status) {
-                                return { channel: channel, status: status };
-                            })
-                    );
-                })(savedChannels[i]);
-            }
-            
-            Promise.all(promises)
-                .then(function(results) {
-                    // Ordenar canales: online primero
-                    results.sort(function(a, b) {
-                        if (a.status.is_live && !b.status.is_live) return -1;
-                        if (!a.status.is_live && b.status.is_live) return 1;
-                        return 0;
-                    });
-                    
-                    // Actualizar el DOM en el orden correcto
-                    tabsContainer.innerHTML = '';
-                    
-                    for (var i = 0; i < results.length; i++) {
-                        var channel = results[i].channel;
-                        var status = results[i].status;
-                        
-                        var channelTabHTML = 
-                            '<div class="channel-tab-wrapper">' +
-                                '<div class="channel-tab" onclick="loadChannel(\'' + channel.name + '\'); scrollToVideoContainer();">' +
-                                    (channel.profile_pic ? 
-                                        '<img src="' + channel.profile_pic + '" alt="' + channel.displayName + '" class="channel-img" onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'flex\';">' : 
-                                        '') +
-                                    '<div class="channel-img-placeholder" style="' + (channel.profile_pic ? 'display: none;' : 'display: flex;') + '">' +
-                                        '<i class="fas fa-user"></i>' +
-                                    '</div>' +
-                                    '<div class="channel-name-tab">' + channel.displayName + '</div>' +
-                                    '<div class="channel-status ' + (status.is_live ? 'online' : 'offline') + '">' +
-                                        (status.is_live ? 
-                                            '<i class="fas fa-users"></i> ' + status.viewer_count : 
-                                            '<i class="fas fa-circle"></i> Offline') +
-                                    '</div>' +
-                                    '<button class="view-btn ' + (status.is_live ? '' : 'offline') + '" onclick="event.stopPropagation(); ' + 
-                                        (status.is_live ? 
-                                            'loadChannel(\'' + channel.name + '\'); scrollToVideoContainer();' : 
-                                            'window.open(\'https://kick.com/' + channel.name + '\', \'_blank\')') + '">' +
-                                        (status.is_live ? 
-                                            '<i class="fas fa-play"></i> Ver' : 
-                                            '<i class="fas fa-eye"></i> Ver canal') +
-                                    '</button>' +
-                                '</div>' +
-                                '<button class="delete-btn" onclick="event.stopPropagation(); removeChannel(\'' + channel.name + '\')">' +
-                                    '<i class="fas fa-times"></i>' +
-                                '</button>' +
-                            '</div>';
-                        
-                        tabsContainer.innerHTML += channelTabHTML;
-                    }
-                    
-                    // Restaurar el botón
-                    if (refreshBtn) {
-                        refreshBtn.disabled = false;
-                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> <span>Actualizar</span>';
-                    }
-                    
-                    updateStatus('<i class="fas fa-check"></i> Estados de canales actualizados', 'success');
-                })
-                .catch(function(error) {
-                    console.error('Error actualizando estados de canales:', error);
-                    
-                    // Restaurar el botón incluso en caso de error
-                    if (refreshBtn) {
-                        refreshBtn.disabled = false;
-                        refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Actualizar';
-                    }
-                    
-                    updateStatus('<i class="fas fa-exclamation-circle"></i> Error al actualizar estados', 'error');
-                });
-        }
-
-        // Función para mostrar el placeholder inicial
-        function showInitialPlaceholder() {
-            var video = document.getElementById('videoPlayer');
-            var offlinePlaceholder = document.getElementById('offlinePlaceholder');
-            
-            // Ocultar video y mostrar placeholder
-            video.style.display = 'none';
-            offlinePlaceholder.style.display = 'flex';
-            
-            // Limpiar cualquier reproducción en curso
-            video.pause();
-            video.src = '';
-            video.load();
-            
-            if (hls) {
-                hls.destroy();
-                hls = null;
-            }
-            
-            // Limpiar intervalos de actualización
-            clearInterval(viewersUpdateInterval);
-            
-            // Limpiar información del canal
-            document.getElementById('channelInfo').innerHTML = '';
-            
-            // Actualizar placeholder con contenido inicial
-            offlinePlaceholder.innerHTML = 
-                '<i class="fas fa-play-circle offline-icon"></i>' +
-                '<div class="offline-channel-name">Stream Player</div>' +
-                '<div class="offline-status">Selecciona un canal para comenzar</div>' +
-                '<div class="offline-last-time">Usa el campo de arriba para buscar un canal de Kick</div>' +
-                '<button class="offline-btn" onclick="document.getElementById(\'channelInput\').focus()">' +
-                    '<i class="fas fa-search"></i> Buscar canal' +
-                '</button>';
-        }
-
-        // ========== CÓDIGO DEL CHAT ==========
-        var ws = null;
-        var emotes = {};
-        var rooms = {};
-        var MAX_MESSAGES = 100;
-        var pauseRemoval = false;
-        var pauseRemovalTimer = null;
-        var messagesBox = document.getElementById("messages");
-        var scrollBtn = document.getElementById("scrollBottomBtn");
-
-        // Función para conectar al chat de un canal
-        function joinChannel(channelName) {
-            // Cerrar conexión anterior si existe
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.close();
-            }
-            
-            // Limpiar mensajes anteriores
-            messagesBox.innerHTML = '';
-            
-            // Inicializar WebSocket
-            ws = new WebSocket("wss://ws-us2.pusher.com/app/32cbd69e4b950bf97679?protocol=7&client=js&version=7.6.0");
-            
-            ws.onopen = function() { 
-                console.log("✅ WebSocket conectado para el chat"); 
-                getChatroomId(channelName, function(id) {
-                    rooms[id] = true;
-                    if (ws.readyState === 1) {
-                        ws.send(JSON.stringify({
-                            event: "pusher:subscribe",
-                            data: { auth: "", channel: "chatrooms." + id + ".v2" }
-                        }));
-                        load7TV(channelName);
-                        loadKickEmotes(channelName);
-                        console.log("📡 Conectado al chat de " + channelName);
-                    }
-                });
-            };
-            
-            ws.onerror = function() { console.log("❌ Error WebSocket"); };
-            ws.onclose = function(e) { console.log("⚠️ WS cerrado: " + e.code); };
-            
-            ws.onmessage = function(e) {
-                try {
-                    var data = JSON.parse(e.data);
-                    if (!data.data) return;
-                    var messageData = JSON.parse(data.data);
-                    if (messageData.sender && messageData.content) {
-                        addMsg(messageData.sender.username, messageData.content);
-                    }
-                } catch(e) {
-                    // Error silencioso
-                }
-            };
-        }
-
-        // ===== 7TV GLOBAL =====
-        var xhrGlobal = new XMLHttpRequest();
-        xhrGlobal.open("GET", "https://7tv.io/v3/emote-sets/global");
-        xhrGlobal.onload = function() {
-            if (xhrGlobal.status === 200) {
-                var data = JSON.parse(xhrGlobal.responseText);
-                for (var i = 0; i < data.emotes.length; i++) {
-                    var emote = data.emotes[i];
-                    emotes[emote.name] = "https:" + emote.data.host.url + "/3x";
-                }
-                console.log("🌍 7TV Global OK");
-            }
-        };
-        xhrGlobal.send();
-
-        // ===== 7TV CANAL =====
-        function load7TV(name) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "https://7tv.io/v3/users/kick/" + name);
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        if (data.emote_set && data.emote_set.emotes) {
-                            for (var i = 0; i < data.emote_set.emotes.length; i++) {
-                                var emote = data.emote_set.emotes[i];
-                                emotes[emote.name] = "https:" + emote.data.host.url + "/3x." + emote.data.host.files[0].format;
-                            }
-                            console.log("🎭 7TV canal OK");
-                        }
-                    } catch (e) {
-                        console.log("⚠️ Error 7TV canal");
-                    }
-                }
-            };
-            xhr.send();
-        }
-
-        // ===== EMOTES KICK =====
-        function loadKickEmotes(name) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "https://kick.com/emotes/" + name);
-            xhr.onload = function() {
-                console.log("🔍 Emotes Kick status " + xhr.status);
-                if (xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        var count = 0;
-                        for (var i = 0; i < data.length; i++) {
-                            var section = data[i];
-                            if (section.emotes) {
-                                for (var j = 0; j < section.emotes.length; j++) {
-                                    var emote = section.emotes[j];
-                                    emotes[emote.name] = "https://files.kick.com/emotes/" + emote.id + "/fullsize";
-                                    count++;
-                                }
-                            }
-                        }
-                        console.log(count ? "✅ Kick emotes " + count : "⚠️ No emotes Kick");
-                    } catch (e) {
-                        console.log("❌ Error Kick emotes");
-                    }
-                }
-            };
-            xhr.send();
-        }
-
-        // ===== GET CHATROOM ID =====
-        function getChatroomId(name, cb) {
-            var xhr = new XMLHttpRequest();
-            xhr.open("GET", "https://kick.com/api/v2/channels/" + name);
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    try {
-                        var data = JSON.parse(xhr.responseText);
-                        var id = data.chatroom && data.chatroom.id;
-                        if (id) {
-                            cb(id);
-                        } else {
-                            console.log("⚠️ Sin chatroom");
-                        }
-                    } catch (e) {
-                        console.log("❌ Error API canal");
-                    }
-                }
-            };
-            xhr.send();
-        }
-
-        // ===== PARSE EMOTES =====
-        function parseEmotes(text) {
-            return text.replace(/\[emote:\d+:(.+?)\]/g, function(match, name) {
-                return emotes[name] ? "<img class='chat-emote' src='" + emotes[name] + "'>" : name;
-            });
-        }
-
-        // ===== NAME COLOR - PALETA VIBRANTE Y PASTEL =====
-        function nameColor(n) {
-            var hash = 0;
-            for (var i = 0; i < n.length; i++) {
-                hash = n.charCodeAt(i) + ((hash << 5) - hash);
-            }
-            
-            // Paleta mixta de colores vibrantes y pasteles
-            var vibrantColors = [
-                "hsl(0, 100%, 55%)",     // Rojo puro intenso
-                "hsl(0, 100%, 65%)",     // Rojo vibrante
-                "hsl(0, 95%, 50%)",      // Rojo profundo
-                "hsl(30, 100%, 65%)",    // Naranja fuerte
-                "hsl(60, 100%, 65%)",    // Amarillo brillante
-                "hsl(120, 80%, 65%)",    // Verde vivo
-                "hsl(142, 84%, 42%)",    // Verde Kick oficial
-                "hsl(180, 80%, 65%)",    // Cyan brillante
-                "hsl(240, 80%, 70%)",    // Azul eléctrico
-                "hsl(300, 80%, 70%)",    // Rosa neón
-                "hsl(330, 100%, 70%)",   // Rosa fucsia
-                "hsl(45, 100%, 65%)",    // Dorado
-                "hsl(150, 80%, 60%)",    // Verde esmeralda
-                "hsl(350, 85%, 75%)",    // Rosa pastel
-                "hsl(30, 85%, 75%)",     // Melocotón pastel
-                "hsl(120, 70%, 75%)",    // Verde pastel    
-                "hsl(240, 70%, 80%)",    // Azul pastel
-                "hsl(270, 70%, 80%)",    // Lila pastel
-                "hsl(80, 80%, 75%)",     // Lima pastel
-                "hsl(160, 75%, 75%)",    // Verde menta
-                "hsl(220, 100%, 60%)",    // Azul intenso   
-                "hsl(50, 90%, 80%)",     // Amarillo crema    
-            ];
-            
-            return vibrantColors[Math.abs(hash) % vibrantColors.length];
-        }
-
-        // ===== SCROLL EVENT =====
-        messagesBox.addEventListener("scroll", function() {
-            var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
-            if (!atBottom) {
-                pauseRemoval = true;
-                scrollBtn.style.display = "flex";
-                clearTimeout(pauseRemovalTimer);
-                pauseRemovalTimer = setTimeout(function() { 
-                    pauseRemoval = false; 
-                }, 60000);
-            } else {
-                scrollBtn.style.display = "none";
+                // Modo normal
+                document.body.classList.toggle('hide-chat-normal');
+                toggleChatBtn.textContent = document.body.classList.contains('hide-chat-normal') ? '▶' : '◀';
             }
         });
 
-        // ===== ADD MSG =====
-        function addMsg(user, text) {
-            var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
-            
-            var msgElement = document.createElement("div");
-            msgElement.className = "msg";
-            var color = nameColor(user);
-            var parsedText = parseEmotes(text);
-
-            msgElement.innerHTML = "<span class='username' style='color:" + color + "'>" + user + "</span><span class='colon'>:</span> <span>" + parsedText + "</span>";
-            messagesBox.appendChild(msgElement);
-
-            if (!pauseRemoval) {
-                while (messagesBox.children.length > MAX_MESSAGES) {
-                    messagesBox.removeChild(messagesBox.firstChild);
-                }
+        // Mostrar chat cuando está oculto en pantalla completa
+        showChatBtn.addEventListener('click', () => {
+            if (isFullscreen && isChatHidden) {
+                isChatHidden = false;
+                document.body.classList.remove('hide-chat');
+                toggleChatBtn.textContent = '◀';
             }
-
-            if (atBottom) {
-                messagesBox.scrollTop = messagesBox.scrollHeight;
-                scrollBtn.style.display = "none";
-            }
-        }
-
-        // ===== BOTON SCROLL =====
-        scrollBtn.onclick = function() {
-            messagesBox.scrollTop = messagesBox.scrollHeight;
-            scrollBtn.style.display = "none";
-        };
-
-        // Cargar al iniciar
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Iniciando aplicación...');
-            showInitialPlaceholder(); // Mostrar placeholder inicial
-            renderChannelsList();
-            
-            // Inicializar controles de video
-            initVideoControls();
-            
-            // Event listener para el botón de calidad
-            document.getElementById('qualityBtn').addEventListener('click', toggleQualityDropdown);
-            
-            // Cerrar el dropdown si se hace clic fuera de él
-            document.addEventListener('click', function(event) {
-                var qualityBtn = document.getElementById('qualityBtn');
-                var qualityDropdown = document.getElementById('qualityDropdown');
-                
-                if (qualityBtn && qualityDropdown && 
-                    !qualityBtn.contains(event.target) && 
-                    !qualityDropdown.contains(event.target)) {
-                    qualityDropdown.classList.remove('show');
-                }
-            });
-            
-            // Mostrar información del canal al hacer hover o toque en el video en móvil
-            var videoContainer = document.getElementById('videoContainer');
-            if (videoContainer) {
-                videoContainer.addEventListener('mouseenter', showChannelInfoMobile);
-                videoContainer.addEventListener('touchstart', showChannelInfoMobile);
-                videoContainer.addEventListener('click', showChannelInfoMobile);
-            }
-            
-            document.getElementById('channelInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') {
-                    loadStream();
-                }
-            });
         });
-        
-        // Función para mostrar información del canal en móvil
-        function showChannelInfoMobile() {
-            if (window.innerWidth <= 768) {
-                var channelInfo = document.getElementById('channelInfo');
-                if (channelInfo && channelInfo.innerHTML.trim() !== '') {
-                    channelInfo.classList.add('show');
-                    // Programar para ocultar después de 5 segundos
-                    clearTimeout(channelInfoTimeout);
-                    channelInfoTimeout = setTimeout(function() {
-                        channelInfo.classList.remove('show');
-                    }, 5000);
-                }
+
+        // Mostrar chat cuando está oculto en modo normal
+        showChatNormalBtn.addEventListener('click', () => {
+            document.body.classList.remove('hide-chat-normal');
+            toggleChatBtn.textContent = '◀';
+        });
+
+        // Control de reproducción
+        playPauseBtn.addEventListener('click', () => {
+            if (video.paused) {
+                video.play();
+                playPauseBtn.textContent = '⏸️';
+            } else {
+                video.pause();
+                playPauseBtn.textContent = '▶️';
             }
-        }
+        });
+
+        // Control de volumen
+        muteBtn.addEventListener('click', () => {
+            if (video.muted) {
+                video.muted = false;
+                muteBtn.textContent = '🔊';
+            } else {
+                video.muted = true;
+                muteBtn.textContent = '🔇';
+            }
+        });
+
+        // Enviar mensaje al chat
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && chatInput.value.trim() !== '') {
+                addChatMessage('Tú', chatInput.value);
+                chatInput.value = '';
+                
+                // Simular respuesta después de un tiempo
+                setTimeout(() => {
+                    const responses = [
+                        '¡Gracias por el mensaje!',
+                        'Esa es una buena pregunta',
+                        '¡Me alegra verte en el chat!',
+                        'Voy a responder eso en un momento'
+                    ];
+                    const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                    addChatMessage('StreamerPro', randomResponse);
+                }, 2000);
+            }
+        });
+
+        // Ajustar el video cuando cambia el tamaño de la ventana
+        window.addEventListener('resize', () => {
+            if (isFullscreen) {
+                // Reajustar el video para mantener el centrado
+                video.style.maxHeight = '100vh';
+                video.style.width = 'auto';
+                video.style.maxWidth = '100%';
+            }
+        });
     </script>
 </body>
 </html>

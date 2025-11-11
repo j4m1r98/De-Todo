@@ -254,7 +254,7 @@
         }
         
         .channel-info { 
-            diplay: none;
+            display: none;
             margin-bottom: 15px; 
             padding: 15px; 
             background: #1a1a1a; 
@@ -1048,7 +1048,11 @@
         // Lista de canales guardados
         var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];                    
             
+         // Configurar pantalla completa
+            setupFullscreen();
             
+            // Configurar chat
+            setupChat();   
 
         // Función para configurar pantalla completa
         function setupFullscreen() {
@@ -2348,8 +2352,7 @@
             showInitialPlaceholder(); // Mostrar placeholder inicial
             renderChannelsList();
             
-            // Inicializar controles de video
-            initVideoControls();
+            
             
             // Event listener para el botón de calidad
             document.getElementById('qualityBtn').addEventListener('click', toggleQualityDropdown);

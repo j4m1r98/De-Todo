@@ -103,13 +103,9 @@
         
         .video-container {
             position: relative;
-            width: 100%;            
-            background: black;
-            /* Modern browsers */
+            width: 100%;
             aspect-ratio: 16 / 9;
-            /* Fallback antiguo */
-            height: 0;
-            padding-top: 56.25%;           
+            background: black;            
         }
         
         video { 
@@ -118,7 +114,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: black;             
+            background: black; 
         }
         
         .offline-placeholder {
@@ -127,8 +123,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #1a1a1a;
-            
+            background: #1a1a1a;           
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -250,7 +245,7 @@
             margin-bottom: 15px; 
             padding: 15px; 
             background: #1a1a1a; 
-            border-radius: 8px; 
+            border-radius: 0 0 8px 8px; 
             transition: opacity 0.3s ease;
         }
         .channel-main-info {
@@ -758,7 +753,11 @@
             .status {
                 border-radius: 0;              
             }
-            
+ 
+            .video-container {
+                margin-bottom: 15px;
+            }   
+        
             .offline-placeholder {
                 padding: 15px;
                 border-radius: 0;

@@ -948,10 +948,9 @@
 
         // Función para hacer scroll suave al contenedor de video
         function scrollToVideoContainer() {
-            const centerColumn = document.querySelector('.status');
-            if (centerColumn) {
-                centerColumn.scrollTo({ 
-                    
+            const videoContainer = document.querySelector('.status');
+            if (videoContainer) {
+                videoContainer.scrollIntoView({ 
                     behavior: 'smooth',
                     block: 'start'
                 });

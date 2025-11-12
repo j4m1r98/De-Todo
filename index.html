@@ -541,8 +541,7 @@
         
         .titulo {
             padding: 8px 12px;
-            background: #161b22;
-            border-bottom: 2px solid #30363d;
+            
             text-align: center;
             font-size: 1rem;
             line-height: 1.5rem;
@@ -702,25 +701,34 @@
 
         /* Estilos del chat */
         .chat-header {
-            padding: 15px;
-            border-bottom: 1px solid #343437;
+            padding: 10px;
+            border-bottom: 2px solid #343437;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-
-        .chat-title {
-            font-weight: 600;
-        }
-
+        
         .toggle-chat-btn {
             background: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border: none;
-            color: #efeff1;
+            color: #ffffff;
             cursor: pointer;
             font-size: 18px;           
         }
 
+        .config-btn {
+            background: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 18px;
+        }
         /* ========== CORRECCIONES DE PANTALLA COMPLETA ========== */
         
         /* Estados de pantalla completa - CORREGIDOS */
@@ -797,14 +805,13 @@
         /* Botón para mostrar chat en pantalla completa */
         .show-chat-btn {
             position: fixed;
-            right: 20px;
-            top: 20px;
-            background: rgba(100, 65, 165, 0.8);
+            right: 10px;
+            top: 10px;
+            background: none;
             color: white;
             font-size: 18px;
             border: none;            
-            padding: 12px;
-            border-radius: 4px;
+            padding: 8px 12px;           
             cursor: pointer;
             z-index: 10004;
             display: none;
@@ -831,14 +838,13 @@
         /* Botón para mostrar chat en modo normal - CORREGIDO */
         .show-chat-normal-btn {
             position: fixed;
-            right: 20px;
-            top: 20px;
-            background: rgba(100, 65, 165, 0.8);
+            right: 10px;
+            top: 10px;
+            background: none;            
             color: white;
             font-size: 18px;
             border: none; 
-            padding: 12px;
-            border-radius: 4px;       
+            padding: 8px 12px;                  
             cursor: pointer;
             z-index: 10004;
             display: none;
@@ -1004,8 +1010,9 @@
         <!-- Columna derecha - Chat -->
         <div class="right-column">
             <div class="chat-header">
+                <button class="config-btn" id="configBtn"><i class="fas fa-cog"></i></button>              
+                <div class="titulo">Chat</div>
                 <button class="toggle-chat-btn" id="toggleChatBtn"><i class="fas fa-indent"></i></button>
-                <div class="titulo">Chat</div>              
             </div>
             <div id="messages-container">
                 <div id="messages"></div>
@@ -1034,13 +1041,6 @@
         // Variables para controles de video
         var video = document.getElementById('videoPlayer');
         
-        var fullscreenBtnIcon = document.getElementById('fullscreenBtnIcon');
-        var videoContainer = document.getElementById('videoContainer');
-        var toggleChatBtn = document.getElementById('toggleChatBtn');
-        var showChatBtn = document.getElementById('showChatBtn');
-        var showChatNormalBtn = document.getElementById('showChatNormalBtn');
-        
-        
         // Variables de estado
         var isFullscreen = false;
         var isChatHidden = false;
@@ -1048,11 +1048,14 @@
         // Lista de canales guardados
         var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];                    
             
-         
-
         // Función para configurar pantalla completa
         function setupFullscreen() {
-            
+            // Inicializar elementos DOM necesarios
+            var fullscreenBtnIcon = document.getElementById('fullscreenBtnIcon');
+            var videoContainer = document.getElementById('videoContainer');
+            var toggleChatBtn = document.getElementById('toggleChatBtn');
+            var showChatBtn = document.getElementById('showChatBtn');
+            var showChatNormalBtn = document.getElementById('showChatNormalBtn');
             
             // Botón de pantalla completa con icono
             fullscreenBtnIcon.addEventListener('click', function() {
@@ -1120,6 +1123,11 @@
         
         // Función para configurar el chat
         function setupChat() {
+            // Inicializar elementos DOM necesarios
+            var toggleChatBtn = document.getElementById('toggleChatBtn');
+            var showChatBtn = document.getElementById('showChatBtn');
+            var showChatNormalBtn = document.getElementById('showChatNormalBtn');
+            
             // Ocultar/mostrar chat (funciona en ambos modos)
             toggleChatBtn.addEventListener('click', function() {
                 if (isFullscreen) {
@@ -1145,8 +1153,6 @@
                 console.log('Mostrando chat desde botón en modo normal');
             });
         }
-
-        // Resto del código permanece igual...
 
         // Función para hacer scroll suave al contenedor de video
         function scrollToVideoContainer() {
@@ -2113,7 +2119,7 @@
         var ws = null;
         var emotes = {};
         var rooms = {};
-        var MAX_MESSAGES = 100;
+        var MAX_MESSAGES = 50;
         var pauseRemoval = false;
         var pauseRemovalTimer = null;
         var messagesBox = document.getElementById("messages");

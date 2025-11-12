@@ -326,6 +326,7 @@
         
         /* Estilos para la lista de canales */
         .channels-list { 
+            margin-top: 15px;
             margin-bottom: 15px; 
             background: #1a1a1a; 
             border-radius: 8px; 
@@ -740,6 +741,7 @@
             .channels-list {                
                 overflow-y: visible;
                 border-radius: 0;
+                margin-top: 0;
                 margin-bottom: 0;
             }
             
@@ -948,7 +950,7 @@
 
         // Función para hacer scroll suave al contenedor de video
         function scrollToVideoContainer() {
-            const videoContainer = document.querySelector('.status');
+            const videoContainer = document.querySelector('.video-container');
             if (videoContainer) {
                 videoContainer.scrollIntoView({ 
                     behavior: 'smooth',

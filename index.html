@@ -1162,25 +1162,19 @@
         return;
     }
     
-    // ✅ GUARDAR POSICIÓN DE SCROLL ANTES DE MOVER
-var currentScrollPos = messagesContainer.scrollTop;
-var currentScrollHeight = messagesContainer.scrollHeight;
-
-// ✅ MOVER CONTENEDOR REAL 
+    // ✅ MOVER CONTENEDOR REAL 
 messagesContainer.style.display = 'none';
 fullscreenMessages.innerHTML = '';
 fullscreenMessages.appendChild(messagesContainer);
 messagesContainer.style.display = 'block';
 
-// ✅ RESTAURAR POSICIÓN DE SCROLL DESPUÉS DE MOVER
+// ✅ FORZAR SCROLL AL FINAL INMEDIATAMENTE
 setTimeout(function() {
-    if (pauseRemoval) {
-        // Si estaba pausado, mantener posición relativa
-        messagesContainer.scrollTop = currentScrollPos + (messagesContainer.scrollHeight - currentScrollHeight);
-    } else {
-        // Si no estaba pausado, ir al final
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // ✅ FORZAR NUEVAMENTE DESPUÉS DE QUE EL DOM SE ESTABILICE
+    setTimeout(function() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+    }, 200);
 }, 50);
 
 pauseRemoval = false;

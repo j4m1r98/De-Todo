@@ -1209,7 +1209,7 @@
             pauseRemovalTimer = setTimeout(function() { 
                 pauseRemoval = false; 
                 fullscreenScrollBtn.style.display = "none";
-            }, 60000);
+            }, 30000);
         } else {
             pauseRemoval = false;
             fullscreenScrollBtn.style.display = "none";
@@ -1497,33 +1497,28 @@
 
         // Configurar eventos del chat normal
         function setupNormalChatEvents() {
-    var messagesBox = document.getElementById("messages");
-    var scrollBtn = document.getElementById("scrollBottomBtn");
-    
-    messagesBox.addEventListener("scroll", function() {
-        var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
-        
-        if (!atBottom) {
-            pauseRemoval = true;
-            scrollBtn.style.display = "flex";
-            clearTimeout(pauseRemovalTimer);
-            // ✅ REDUCIR TIEMPO A 15 SEGUNDOS (más razonable para TV)
-            pauseRemovalTimer = setTimeout(function() { 
-                pauseRemoval = false; 
+            var messagesBox = document.getElementById("messages");
+            var scrollBtn = document.getElementById("scrollBottomBtn");
+            
+            messagesBox.addEventListener("scroll", function() {
+                var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+                if (!atBottom) {
+                    pauseRemoval = true;
+                    scrollBtn.style.display = "flex";
+                    clearTimeout(pauseRemovalTimer);
+                    pauseRemovalTimer = setTimeout(function() { 
+                        pauseRemoval = false; 
+                    }, 30000);
+                } else {
+                    scrollBtn.style.display = "none";
+                }
+            });
+            
+            scrollBtn.onclick = function() {
+                messagesBox.scrollTop = messagesBox.scrollHeight;
                 scrollBtn.style.display = "none";
-            }, 30000); // 15 segundos en lugar de 60
-        } else {
-            pauseRemoval = false;
-            scrollBtn.style.display = "none";
+            };
         }
-    });
-    
-    scrollBtn.onclick = function() {
-        messagesBox.scrollTop = messagesBox.scrollHeight;
-        scrollBtn.style.display = "none";
-        pauseRemoval = false;
-    };
-}
 
         // ========== FUNCIONES EXISTENTES DEL STREAM ==========
         // (Todas las funciones existentes se mantienen igual)

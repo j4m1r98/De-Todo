@@ -1137,7 +1137,12 @@
     var fullscreenVideo = document.getElementById('fullscreenVideo');
     var fullscreenContainer = document.getElementById('fullscreenContainer');
     var messagesContainer = document.getElementById("messages");
-    var fullscreenMessages = document.getElementById("fullscreenMessages");
+    var messagesParent = messagesContainer.parentNode;
+    
+    // ✅ PRESERVAR ESTADO ANTES DE CUALQUIER CAMBIO
+    var currentScrollTop = messagesContainer.scrollTop;
+    var currentScrollHeight = messagesContainer.scrollHeight;
+    var isAtBottom = (currentScrollHeight - currentScrollTop - messagesContainer.clientHeight) < 50;
     
     if (videoPlayer.src && videoPlayer.src !== '') {
         fullscreenVideo.src = videoPlayer.src;
@@ -1162,31 +1167,36 @@
         return;
     }
     
-    // ✅ MOVER CONTENEDOR REAL 
-messagesContainer.style.display = 'none';
-fullscreenMessages.innerHTML = '';
-fullscreenMessages.appendChild(messagesContainer);
-messagesContainer.style.display = 'block';
-
-// ✅ SOLUCIÓN: FORZAR SCROLL DESPUÉS DE QUE EL LAYOUT SE ESTABILICE
-setTimeout(function() {
-    // Primero forzar un reflow del DOM
-    messagesContainer.scrollTop = 0;
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    // ✅ ESTRATEGIA: MOVER TODO EL CONTENEDOR PADRE, NO SOLO LOS MENSAJES
+    var originalMessagesContainer = document.getElementById("messages-container");
+    var fullscreenMessagesContainer = document.querySelector(".fullscreen-messages-container");
     
-    // Segundo intento después de que el navegador procese el cambio
+    // COPIAR ESTILOS Y CONTENIDO DEL PADRE (NO DUPLICA MENSAJES)
+    fullscreenMessagesContainer.style.cssText = originalMessagesContainer.style.cssText;
+    fullscreenMessagesContainer.className = originalMessagesContainer.className + " fullscreen-messages-container";
+    
+    // ✅ MOVER EL CONTENEDOR DE MENSAJES AL NUEVO PADRE
+    var messagesClone = messagesContainer.cloneNode(false); // Solo el contenedor, sin hijos
+    messagesClone.id = "messages-fullscreen-temp";
+    
+    // MOVER TODOS LOS MENSAJES AL NUEVO CONTENEDOR
+    while (messagesContainer.firstChild) {
+        messagesClone.appendChild(messagesContainer.firstChild);
+    }
+    
+    fullscreenMessagesContainer.appendChild(messagesClone);
+    
+    // ✅ RESTAURAR SCROLL INMEDIATAMENTE
     setTimeout(function() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // Tercer intento como respaldo
-        setTimeout(function() {
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }, 100);
+        if (pauseRemoval || !isAtBottom) {
+            messagesClone.scrollTop = currentScrollTop;
+        } else {
+            messagesClone.scrollTop = messagesClone.scrollHeight;
+        }
     }, 50);
-}, 50);
-
-pauseRemoval = false;
-document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
+    
+    pauseRemoval = false;
+    document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
     fullscreenContainer.classList.add('active');
     document.querySelector('.app-container').style.display = 'none';
     isFullscreen = true;
@@ -1211,28 +1221,20 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
 }
 
         function setupFullscreenChatEvents() {
-    var messagesContainer = document.getElementById("messages");
+    var messagesContainer = document.getElementById("messages-fullscreen-temp"); // ← Usar el clon temporal
     var fullscreenScrollBtn = document.getElementById('fullscreenScrollBottomBtn');
     
-    // ✅ LIMPIAR EVENT LISTENERS PREVIOS para evitar duplicados
-    var newContainer = messagesContainer.cloneNode(false);
-    while (messagesContainer.firstChild) {
-        newContainer.appendChild(messagesContainer.firstChild);
-    }
-    messagesContainer.parentNode.replaceChild(newContainer, messagesContainer);
-    messagesContainer = newContainer;
+    if (!messagesContainer) return;
     
     messagesContainer.addEventListener("scroll", function() {
         var atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 50;
         if (!atBottom) {
             pauseRemoval = true;
             fullscreenScrollBtn.style.display = "flex";
-            clearTimeout(pauseRemovalTimerFullscreen);
-            pauseRemovalTimerFullscreen = setTimeout(function() { 
+            clearTimeout(pauseRemovalTimer);
+            pauseRemovalTimer = setTimeout(function() { 
                 pauseRemoval = false; 
                 fullscreenScrollBtn.style.display = "none";
-                // ✅ FORZAR SCROLL AL FINAL CUANDO TERMINE EL TIMEOUT
-                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }, 30000);
         } else {
             pauseRemoval = false;
@@ -1244,7 +1246,6 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         fullscreenScrollBtn.style.display = "none";
         pauseRemoval = false;
-        clearTimeout(pauseRemovalTimerFullscreen);
     };
 }
 
@@ -1260,55 +1261,75 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
         }
 
         function exitFullscreen() {
-            var messagesContainer = document.getElementById("messages");
-    var originalParent = document.getElementById("messages-container");
-    var fullscreenMessages = document.getElementById("fullscreenMessages");
+    var fullscreenContainer = document.getElementById('fullscreenContainer');
+    var messagesClone = document.getElementById("messages-fullscreen-temp");
+    var originalMessagesContainer = document.getElementById("messages-container");
+    var originalMessages = document.getElementById("messages");
     
-    messagesContainer.style.display = 'none';
-    fullscreenMessages.innerHTML = '';
-    originalParent.appendChild(messagesContainer);
-    messagesContainer.style.display = 'block';
-
-            var videoPlayer = document.getElementById('videoPlayer');
-            var fullscreenVideo = document.getElementById('fullscreenVideo');
-            var fullscreenContainer = document.getElementById('fullscreenContainer');
-            
-            if (fullscreenVideo.src && fullscreenVideo.src !== '') {
-                videoPlayer.src = fullscreenVideo.src;
-                
-                if (hls && hls.media) {
-                    hls.detachMedia();
-                    hls.attachMedia(videoPlayer);
-                }
-                
-                videoPlayer.currentTime = fullscreenVideo.currentTime;
-                
-                if (!fullscreenVideo.paused) {
-                    videoPlayer.play().catch(function(e) {
-                        console.log('Error al reproducir al salir de pantalla completa:', e);
-                    });
-                }
-            }
-            
-            fullscreenContainer.classList.remove('active');
-            document.querySelector('.app-container').style.display = 'flex';
-            isFullscreen = false;
-            
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) {
-                document.msExitFullscreen();
-            } else if (document.mozCancelFullScreen) {
-                document.mozCancelFullScreen();
-            }
-            
-            document.removeEventListener('fullscreenchange', handleFullscreenChange);
-            document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-            document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+    if (messagesClone) {
+        // ✅ PRESERVAR ESTADO ACTUAL
+        var currentScrollTop = messagesClone.scrollTop;
+        var currentScrollHeight = messagesClone.scrollHeight;
+        var isAtBottom = (currentScrollHeight - currentScrollTop - messagesClone.clientHeight) < 50;
+        
+        // MOVER MENSAJES DE VUELTA AL CONTENEDOR ORIGINAL
+        while (messagesClone.firstChild) {
+            originalMessages.appendChild(messagesClone.firstChild);
         }
+        
+        // ELIMINAR CLON TEMPORAL
+        messagesClone.remove();
+        
+        // ✅ RESTAURAR SCROLL
+        setTimeout(function() {
+            if (pauseRemoval || !isAtBottom) {
+                originalMessages.scrollTop = currentScrollTop;
+            } else {
+                originalMessages.scrollTop = originalMessages.scrollHeight;
+            }
+        }, 50);
+    }
+    
+    // Resto del código del video...
+    var videoPlayer = document.getElementById('videoPlayer');
+    var fullscreenVideo = document.getElementById('fullscreenVideo');
+    
+    if (fullscreenVideo.src && fullscreenVideo.src !== '') {
+        videoPlayer.src = fullscreenVideo.src;
+        
+        if (hls && hls.media) {
+            hls.detachMedia();
+            hls.attachMedia(videoPlayer);
+        }
+        
+        videoPlayer.currentTime = fullscreenVideo.currentTime;
+        
+        if (!fullscreenVideo.paused) {
+            videoPlayer.play().catch(function(e) {
+                console.log('Error al reproducir al salir de pantalla completa:', e);
+            });
+        }
+    }
+    
+    fullscreenContainer.classList.remove('active');
+    document.querySelector('.app-container').style.display = 'flex';
+    isFullscreen = false;
+    
+    if (document.exitFullscreen) {
+        document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+        document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+        document.mozCancelFullScreen();
+    }
+    
+    document.removeEventListener('fullscreenchange', handleFullscreenChange);
+    document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
+    document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
+}
 
         // ========== CHAT MEJORADO ==========
         function joinChannel(channelName) {
@@ -1379,13 +1400,6 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
             if (atBottom || !pauseRemoval) {
                 messagesBox.scrollTop = messagesBox.scrollHeight;
                 if (scrollBtn) scrollBtn.style.display = "none";
-                
-                // ✅ FORZAR SCROLL ADICIONAL EN FULLSCREEN SI ESTÁ ACTIVO
-                if (isFullscreen && containerId === "messages") {
-                    setTimeout(function() {
-                        messagesBox.scrollTop = messagesBox.scrollHeight;
-                    }, 10);
-                }
             }
         }
 
@@ -2195,6 +2209,6 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
                 if (e.key === 'Enter') loadStream();
             });
         });
-    </script> 
+    </script>
 </body>
 </html>

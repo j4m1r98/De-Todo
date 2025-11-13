@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --right-column-width: 360px;
+            --right-column-width: 320px;
         }
         
         body { 
@@ -106,7 +106,9 @@
             width: 100%;
             height: 0;
             padding-top: 56.25%; /* 16:9 Aspect Ratio */
-            background: black;            
+            background: black;
+            
+            margin-bottom: 15px;
         }
         
         video { 
@@ -116,6 +118,7 @@
             width: 100%;
             height: 100%;
             background: black; 
+            border-radius: 8px;
         }
         
         .offline-placeholder {
@@ -124,7 +127,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: #1a1a1a;           
+            background: #1a1a1a;
+            
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -246,7 +250,7 @@
             margin-bottom: 15px; 
             padding: 15px; 
             background: #1a1a1a; 
-            border-radius: 0 0 8px 8px; 
+            border-radius: 8px; 
             transition: opacity 0.3s ease;
         }
         .channel-main-info {
@@ -326,7 +330,6 @@
         
         /* Estilos para la lista de canales */
         .channels-list { 
-            margin-top: 15px;
             margin-bottom: 15px; 
             background: #1a1a1a; 
             border-radius: 8px; 
@@ -741,7 +744,6 @@
             .channels-list {                
                 overflow-y: visible;
                 border-radius: 0;
-                margin-top: 0;
                 margin-bottom: 0;
             }
             
@@ -756,11 +758,7 @@
             .status {
                 border-radius: 0;              
             }
- 
-            .video-container {
-                margin-bottom: 15px;
-            }   
-        
+            
             .offline-placeholder {
                 padding: 15px;
                 border-radius: 0;
@@ -950,7 +948,7 @@
 
         // Función para hacer scroll suave al contenedor de video
         function scrollToVideoContainer() {
-            const videoContainer = document.querySelector('.video-container');
+            const videoContainer = document.querySelector('.status');
             if (videoContainer) {
                 videoContainer.scrollIntoView({ 
                     behavior: 'smooth',

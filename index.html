@@ -1101,7 +1101,7 @@
         </div>
     </div>
 
-    <script>
+   <script>
         // Variables globales
         var hls = null;
         var autoRefreshInterval = null;
@@ -1168,13 +1168,21 @@ fullscreenMessages.innerHTML = '';
 fullscreenMessages.appendChild(messagesContainer);
 messagesContainer.style.display = 'block';
 
-// ✅ FORZAR SCROLL AL FINAL INMEDIATAMENTE
+// ✅ SOLUCIÓN: FORZAR SCROLL DESPUÉS DE QUE EL LAYOUT SE ESTABILICE
 setTimeout(function() {
+    // Primero forzar un reflow del DOM
+    messagesContainer.scrollTop = 0;
     messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    // ✅ FORZAR NUEVAMENTE DESPUÉS DE QUE EL DOM SE ESTABILICE
+    
+    // Segundo intento después de que el navegador procese el cambio
     setTimeout(function() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 200);
+        
+        // Tercer intento como respaldo
+        setTimeout(function() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }, 100);
+    }, 50);
 }, 50);
 
 pauseRemoval = false;
@@ -1184,10 +1192,6 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
     isFullscreen = true;
     
     setupFullscreenChatEvents();
-    
-    setTimeout(function() {
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 100);
     
     var elem = fullscreenContainer;
     if (elem.requestFullscreen) {
@@ -1210,15 +1214,25 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
     var messagesContainer = document.getElementById("messages");
     var fullscreenScrollBtn = document.getElementById('fullscreenScrollBottomBtn');
     
+    // ✅ LIMPIAR EVENT LISTENERS PREVIOS para evitar duplicados
+    var newContainer = messagesContainer.cloneNode(false);
+    while (messagesContainer.firstChild) {
+        newContainer.appendChild(messagesContainer.firstChild);
+    }
+    messagesContainer.parentNode.replaceChild(newContainer, messagesContainer);
+    messagesContainer = newContainer;
+    
     messagesContainer.addEventListener("scroll", function() {
         var atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 50;
         if (!atBottom) {
             pauseRemoval = true;
             fullscreenScrollBtn.style.display = "flex";
-            clearTimeout(pauseRemovalTimerFullscreen); // ✅ TIMER FULLSCREEN
+            clearTimeout(pauseRemovalTimerFullscreen);
             pauseRemovalTimerFullscreen = setTimeout(function() { 
                 pauseRemoval = false; 
                 fullscreenScrollBtn.style.display = "none";
+                // ✅ FORZAR SCROLL AL FINAL CUANDO TERMINE EL TIMEOUT
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
             }, 30000);
         } else {
             pauseRemoval = false;
@@ -1230,7 +1244,7 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         fullscreenScrollBtn.style.display = "none";
         pauseRemoval = false;
-        clearTimeout(pauseRemovalTimerFullscreen); // ✅ LIMPIAR TIMER FULLSCREEN
+        clearTimeout(pauseRemovalTimerFullscreen);
     };
 }
 
@@ -1365,6 +1379,13 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
             if (atBottom || !pauseRemoval) {
                 messagesBox.scrollTop = messagesBox.scrollHeight;
                 if (scrollBtn) scrollBtn.style.display = "none";
+                
+                // ✅ FORZAR SCROLL ADICIONAL EN FULLSCREEN SI ESTÁ ACTIVO
+                if (isFullscreen && containerId === "messages") {
+                    setTimeout(function() {
+                        messagesBox.scrollTop = messagesBox.scrollHeight;
+                    }, 10);
+                }
             }
         }
 
@@ -2174,6 +2195,6 @@ document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
                 if (e.key === 'Enter') loadStream();
             });
         });
-    </script>
+    </script> 
 </body>
 </html>

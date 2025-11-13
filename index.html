@@ -1117,7 +1117,8 @@
         var rooms = {};
         var MAX_MESSAGES = 40;
         var pauseRemoval = false;
-        var pauseRemovalTimer = null;
+        var pauseRemovalTimerNormal = null;
+        var pauseRemovalTimerFullscreen = null;
         
         // Lista de canales guardados
         var savedChannels = JSON.parse(localStorage.getItem('savedChannels')) || [];
@@ -1197,7 +1198,7 @@
 }
 
         function setupFullscreenChatEvents() {
-    var messagesContainer = document.getElementById("messages"); // ← Usar el contenedor real
+    var messagesContainer = document.getElementById("messages");
     var fullscreenScrollBtn = document.getElementById('fullscreenScrollBottomBtn');
     
     messagesContainer.addEventListener("scroll", function() {
@@ -1205,8 +1206,8 @@
         if (!atBottom) {
             pauseRemoval = true;
             fullscreenScrollBtn.style.display = "flex";
-            clearTimeout(pauseRemovalTimer);
-            pauseRemovalTimer = setTimeout(function() { 
+            clearTimeout(pauseRemovalTimerFullscreen); // ✅ TIMER FULLSCREEN
+            pauseRemovalTimerFullscreen = setTimeout(function() { 
                 pauseRemoval = false; 
                 fullscreenScrollBtn.style.display = "none";
             }, 30000);
@@ -1220,6 +1221,7 @@
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
         fullscreenScrollBtn.style.display = "none";
         pauseRemoval = false;
+        clearTimeout(pauseRemovalTimerFullscreen); // ✅ LIMPIAR TIMER FULLSCREEN
     };
 }
 
@@ -1497,28 +1499,32 @@
 
         // Configurar eventos del chat normal
         function setupNormalChatEvents() {
-            var messagesBox = document.getElementById("messages");
-            var scrollBtn = document.getElementById("scrollBottomBtn");
-            
-            messagesBox.addEventListener("scroll", function() {
-                var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
-                if (!atBottom) {
-                    pauseRemoval = true;
-                    scrollBtn.style.display = "flex";
-                    clearTimeout(pauseRemovalTimer);
-                    pauseRemovalTimer = setTimeout(function() { 
-                        pauseRemoval = false; 
-                    }, 30000);
-                } else {
-                    scrollBtn.style.display = "none";
-                }
-            });
-            
-            scrollBtn.onclick = function() {
-                messagesBox.scrollTop = messagesBox.scrollHeight;
-                scrollBtn.style.display = "none";
-            };
+    var messagesBox = document.getElementById("messages");
+    var scrollBtn = document.getElementById("scrollBottomBtn");
+    
+    messagesBox.addEventListener("scroll", function() {
+        var atBottom = messagesBox.scrollHeight - messagesBox.scrollTop - messagesBox.clientHeight < 50;
+        if (!atBottom) {
+            pauseRemoval = true;
+            scrollBtn.style.display = "flex";
+            clearTimeout(pauseRemovalTimerNormal); // ✅ TIMER NORMAL
+            pauseRemovalTimerNormal = setTimeout(function() { 
+                pauseRemoval = false; 
+                scrollBtn.style.display = "none"; // ✅ AHORA SÍ OCULTA
+            }, 30000);
+        } else {
+            pauseRemoval = false;
+            scrollBtn.style.display = "none";
         }
+    });
+    
+    scrollBtn.onclick = function() {
+        messagesBox.scrollTop = messagesBox.scrollHeight;
+        scrollBtn.style.display = "none";
+        pauseRemoval = false;
+        clearTimeout(pauseRemovalTimerNormal); // ✅ LIMPIAR TIMER NORMAL
+    };
+}
 
         // ========== FUNCIONES EXISTENTES DEL STREAM ==========
         // (Todas las funciones existentes se mantienen igual)

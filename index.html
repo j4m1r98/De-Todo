@@ -1162,14 +1162,29 @@
         return;
     }
     
-    // ✅ MOVER CONTENEDOR REAL EN LUGAR DE COPIAR
-    messagesContainer.style.display = 'none';
-    fullscreenMessages.innerHTML = '';
-    fullscreenMessages.appendChild(messagesContainer);
-    messagesContainer.style.display = 'block';
-    
-    pauseRemoval = false;
-    document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
+    // ✅ GUARDAR POSICIÓN DE SCROLL ANTES DE MOVER
+var currentScrollPos = messagesContainer.scrollTop;
+var currentScrollHeight = messagesContainer.scrollHeight;
+
+// ✅ MOVER CONTENEDOR REAL 
+messagesContainer.style.display = 'none';
+fullscreenMessages.innerHTML = '';
+fullscreenMessages.appendChild(messagesContainer);
+messagesContainer.style.display = 'block';
+
+// ✅ RESTAURAR POSICIÓN DE SCROLL DESPUÉS DE MOVER
+setTimeout(function() {
+    if (pauseRemoval) {
+        // Si estaba pausado, mantener posición relativa
+        messagesContainer.scrollTop = currentScrollPos + (messagesContainer.scrollHeight - currentScrollHeight);
+    } else {
+        // Si no estaba pausado, ir al final
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+}, 50);
+
+pauseRemoval = false;
+document.getElementById("fullscreenScrollBottomBtn").style.display = "none";
     fullscreenContainer.classList.add('active');
     document.querySelector('.app-container').style.display = 'none';
     isFullscreen = true;
@@ -1178,7 +1193,7 @@
     
     setTimeout(function() {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }, 50);
+    }, 100);
     
     var elem = fullscreenContainer;
     if (elem.requestFullscreen) {

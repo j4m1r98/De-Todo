@@ -1204,7 +1204,7 @@
                     pauseRemovalTimer = setTimeout(function() { 
                         pauseRemoval = false; 
                     fullscreenScrollBtn.style.display = "none";
-            }, 60000);
+            }, 30000);
         } else {
             pauseRemoval = false;
                     fullscreenScrollBtn.style.display = "none";
@@ -1444,20 +1444,43 @@
             });
         }
 
-        // ===== NAME COLOR =====
+        // ===== NAME COLOR - PALETA VIBRANTE Y PASTEL =====
         function nameColor(n) {
             var hash = 0;
             for (var i = 0; i < n.length; i++) {
                 hash = n.charCodeAt(i) + ((hash << 5) - hash);
             }
             
+            // Paleta mixta de colores vibrantes y pasteles
             var vibrantColors = [
-                "hsl(0, 100%, 55%)", "hsl(0, 100%, 65%)", "hsl(0, 95%, 50%)", "hsl(30, 100%, 65%)",
-                "hsl(60, 100%, 65%)", "hsl(120, 80%, 65%)", "hsl(142, 84%, 42%)", "hsl(180, 80%, 65%)",
-                "hsl(240, 80%, 70%)", "hsl(300, 80%, 70%)", "hsl(330, 100%, 70%)", "hsl(45, 100%, 65%)",
-                "hsl(150, 80%, 60%)", "hsl(350, 85%, 75%)", "hsl(30, 85%, 75%)", "hsl(120, 70%, 75%)",
-                "hsl(240, 70%, 80%)", "hsl(270, 70%, 80%)", "hsl(80, 80%, 75%)", "hsl(160, 75%, 75%)",
-                "hsl(220, 100%, 60%)", "hsl(50, 90%, 80%)"
+                // Colores vibrantes originales
+                "hsl(0, 100%, 55%)",     // Rojo puro intenso
+                "hsl(0, 100%, 65%)",     // Rojo vibrante
+                "hsl(0, 95%, 50%)",      // Rojo profundo
+                "hsl(30, 100%, 65%)",    // Naranja fuerte
+                "hsl(60, 100%, 65%)",    // Amarillo brillante
+                "hsl(120, 80%, 65%)",    // Verde vivo
+                "hsl(142, 84%, 42%)",    // Verde Kick oficial
+                "hsl(180, 80%, 65%)",    // Cyan brillante
+                "hsl(240, 80%, 70%)",    // Azul eléctrico
+                "hsl(300, 80%, 70%)",    // Rosa neón
+                "hsl(330, 100%, 70%)",   // Rosa fucsia
+                "hsl(45, 100%, 65%)",    // Dorado
+                "hsl(150, 80%, 60%)",    // Verde esmeralda
+                
+                // Nuevos colores pastele suaves
+                "hsl(350, 85%, 75%)",    // Rosa pastel
+                "hsl(30, 85%, 75%)",     // Melocotón pastel
+                "hsl(120, 70%, 75%)",    // Verde pastel    
+                "hsl(240, 70%, 80%)",    // Azul pastel
+                "hsl(270, 70%, 80%)",    // Lila pastel
+                 
+                // Colores pastele más intensos
+                
+                "hsl(80, 80%, 75%)",     // Lima pastel
+                "hsl(160, 75%, 75%)",    // Verde menta
+                "hsl(220, 100%, 60%)",    // Azul intenso   
+                "hsl(50, 90%, 80%)",     // Amarillo crema    
             ];
             
             return vibrantColors[Math.abs(hash) % vibrantColors.length];
@@ -1476,7 +1499,7 @@
                     clearTimeout(pauseRemovalTimer);
                     pauseRemovalTimer = setTimeout(function() { 
                         pauseRemoval = false; 
-                    }, 60000);
+                    }, 30000);
                 } else {
                     scrollBtn.style.display = "none";
                 }

@@ -101,13 +101,24 @@
         color: black;
     }
 
-    /* Ocultar elementos en fullscreen real */
-    #stream-container:fullscreen .hide-on-fs,
-    #stream-container:-webkit-full-screen .hide-on-fs,
-    #stream-container:-moz-full-screen .hide-on-fs,
-    #stream-container:-ms-fullscreen .hide-on-fs {
-        display: none !important;
+    #stream-container video {
+    background-color: #000 !important;
     }
+
+    #stream-container:fullscreen,
+#stream-container:-webkit-full-screen,
+#stream-container:-moz-full-screen,
+#stream-container:-ms-fullscreen {
+    background: #000 !important;
+    }
+
+    /* Ocultar elementos en fullscreen real (TODOS LOS NAVEGADORES, INCLUIDO TIZEN) */
+#stream-container:fullscreen .hide-on-fs,
+#stream-container:-webkit-full-screen .hide-on-fs,
+#stream-container:-moz-full-screen .hide-on-fs,
+#stream-container:-ms-fullscreen .hide-on-fs {
+    display: none !important;
+}
 
 </style>
 </head>

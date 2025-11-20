@@ -15,7 +15,6 @@
         color: white;
     }
 
-    /* Contenedor principal (simularemos fullscreen por CSS) */
     #stream-container {
         display: flex;
         flex: 1;
@@ -36,9 +35,7 @@
         background: #18181b;
     }
 
-    h1 {
-        color: #a970ff;
-    }
+    h1 { color: #a970ff; }
 
     nav ul {
         padding: 0;
@@ -54,9 +51,7 @@
         border-radius: 5px;
     }
 
-    nav ul li:hover {
-        background: #a970ff;
-    }
+    nav ul li:hover { background: #a970ff; }
 
     video {
         border: 2px solid #1f1f23;
@@ -86,7 +81,6 @@
         border-radius: 4px;
     }
 
-    /* Botón de fullscreen */
     .fullscreen-btn {
         position: absolute;
         top: 10px;
@@ -107,40 +101,14 @@
         color: black;
     }
 
-    /* FULLSCREEN SIMULADO (FUNCIONA EN TIZEN) */
-    .simulated-fs {
-        position: fixed !important;
-        inset: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        display: flex !important;
-        background: #0e0e10 !important;
-        z-index: 999999 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-
-    .simulated-fs .hide-on-fs {
+    /* Ocultar elementos en fullscreen real */
+    #stream-container:fullscreen .hide-on-fs,
+    #stream-container:-webkit-full-screen .hide-on-fs,
+    #stream-container:-moz-full-screen .hide-on-fs,
+    #stream-container:-ms-fullscreen .hide-on-fs {
         display: none !important;
     }
 
-    .simulated-fs .main {
-        flex: 3 !important;
-        padding: 0 !important;
-        border: none !important;
-    }
-
-    .simulated-fs video {
-        width: 100% !important;
-        height: 100% !important;
-        border: none !important;
-        border-radius: 0 !important;
-    }
-
-    .simulated-fs .chat {
-        flex: 1 !important;
-        padding: 10px !important;
-    }
 </style>
 </head>
 <body>
@@ -175,11 +143,31 @@
                 video.src = videoSrc;
             }
 
-            // FULLSCREEN 100% COMPATIBLE (SIMULADO)
+            // --- FULLSCREEN REAL PARA TIZEN + TODOS LOS NAVEGADORES ---
             function toggleFullscreen() {
-                const container = document.getElementById("stream-container");
-                container.classList.toggle("simulated-fs");
+                let elem = document.getElementById("stream-container");
+
+                // salir de fullscreen
+                if (document.fullscreenElement ||
+                    document.webkitFullscreenElement ||
+                    document.mozFullScreenElement ||
+                    document.msFullscreenElement) {
+
+                    if (document.exitFullscreen) document.exitFullscreen();
+                    else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                    else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                    else if (document.msExitFullscreen) document.msExitFullscreen();
+
+                    return;
+                }
+
+                // entrar en fullscreen real
+                if (elem.requestFullscreen) elem.requestFullscreen();
+                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+                else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
+                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
             }
+
         </script>
 
     </div>

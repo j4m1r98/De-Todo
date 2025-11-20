@@ -15,6 +15,41 @@
         color: white;
     }
 
+    /* ====== FULLSCREEN REAL PARA TIZEN ====== */
+
+    body.fullscreen-mode {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000 !important;
+        z-index: 99999;
+        display: flex;
+    }
+
+    body.fullscreen-mode #stream-container {
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex !important;
+    }
+
+    /* Ocultar título y menú cuando estamos en fullscreen */
+    body.fullscreen-mode .hide-on-fs {
+        display: none !important;
+    }
+
+    /* Video 100% fullscreen */
+    body.fullscreen-mode video {
+        width: 100% !important;
+        height: 100% !important;
+        background: #000 !important;
+        border-radius: 0 !important;
+        object-fit: contain;
+    }
+
+    /* ===== LAYOUT NORMAL ===== */
+
     #stream-container {
         display: flex;
         flex: 1;
@@ -35,7 +70,9 @@
         background: #18181b;
     }
 
-    h1 { color: #a970ff; }
+    h1 {
+        color: #a970ff;
+    }
 
     nav ul {
         padding: 0;
@@ -51,7 +88,9 @@
         border-radius: 5px;
     }
 
-    nav ul li:hover { background: #a970ff; }
+    nav ul li:hover {
+        background: #a970ff;
+    }
 
     video {
         border: 2px solid #1f1f23;
@@ -81,6 +120,7 @@
         border-radius: 4px;
     }
 
+    /* Botón de fullscreen */
     .fullscreen-btn {
         position: absolute;
         top: 10px;
@@ -100,27 +140,8 @@
         background: #53fc18;
         color: black;
     }
-
-    #stream-container video {
-    background-color: #000 !important;
-    }
-
-    #stream-container:fullscreen,
-#stream-container:-webkit-full-screen,
-#stream-container:-moz-full-screen,
-#stream-container:-ms-fullscreen {
-    background: #000 !important;
-    }
-
-    /* Ocultar elementos en fullscreen real (TODOS LOS NAVEGADORES, INCLUIDO TIZEN) */
-#stream-container:fullscreen .hide-on-fs,
-#stream-container:-webkit-full-screen .hide-on-fs,
-#stream-container:-moz-full-screen .hide-on-fs,
-#stream-container:-ms-fullscreen .hide-on-fs {
-    display: none !important;
-}
-
 </style>
+
 </head>
 <body>
 
@@ -146,6 +167,7 @@
             var video = document.getElementById('video');
             var videoSrc = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8";
 
+            // HLS
             if (Hls.isSupported()) {
                 var hls = new Hls();
                 hls.loadSource(videoSrc);
@@ -154,31 +176,41 @@
                 video.src = videoSrc;
             }
 
-            // --- FULLSCREEN REAL PARA TIZEN + TODOS LOS NAVEGADORES ---
+            // ===== FULLSCREEN REAL COMPATIBLE CON TIZEN =====
             function toggleFullscreen() {
-                let elem = document.getElementById("stream-container");
+                let target = document.documentElement;
 
-                // salir de fullscreen
-                if (document.fullscreenElement ||
-                    document.webkitFullscreenElement ||
-                    document.mozFullScreenElement ||
-                    document.msFullscreenElement) {
+                if (!document.fullscreenElement &&
+                    !document.webkitFullscreenElement) {
 
+                    // Entrar fullscreen real
+                    if (target.requestFullscreen) target.requestFullscreen();
+                    else if (target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+                    else if (target.mozRequestFullScreen) target.mozRequestFullScreen();
+                    else if (target.msRequestFullscreen) target.msRequestFullscreen();
+
+                } else {
+
+                    // Salir fullscreen real
                     if (document.exitFullscreen) document.exitFullscreen();
                     else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
                     else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
                     else if (document.msExitFullscreen) document.msExitFullscreen();
-
-                    return;
                 }
-
-                // entrar en fullscreen real
-                if (elem.requestFullscreen) elem.requestFullscreen();
-                else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-                else if (elem.mozRequestFullScreen) elem.mozRequestFullScreen();
-                else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
             }
 
+            // Activar/desactivar clase según fullscreen real
+            function handleFullscreenChange() {
+                if (document.fullscreenElement ||
+                    document.webkitFullscreenElement) {
+                    document.body.classList.add("fullscreen-mode");
+                } else {
+                    document.body.classList.remove("fullscreen-mode");
+                }
+            }
+
+            document.addEventListener("fullscreenchange", handleFullscreenChange);
+            document.addEventListener("webkitfullscreenchange", handleFullscreenChange);
         </script>
 
     </div>

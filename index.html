@@ -112,41 +112,40 @@
         display: none !important;
     }
 
-    /* --- FULLSCREEN (pseudo) PARA TIZEN --- */
-    .tizen-fs {
-        position: fixed !important;
-        top: 0; left: 0;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: #0e0e10;
-        z-index: 9999 !important;
-        display: flex !important;
-        flex-direction: row !important;
-        padding: 0 !important;
-        margin: 0 !important;
-    }
+    /* Fullscreen simulado para TODOS los navegadores (incluyendo Tizen) */
+.simulated-fs {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    background: #0e0e10 !important;
+    z-index: 999999 !important;
+}
 
-    .tizen-fs .hide-on-fs {
-        display: none !important;
-    }
+/* Ocultar título, menú, bordes, etc. */
+.simulated-fs .hide-on-fs {
+    display: none !important;
+}
 
-    .tizen-fs .main {
-        flex: 3 !important;
-        padding: 0 !important;
-        border: none !important;
-    }
+.simulated-fs .main {
+    flex: 3 !important;
+    padding: 0 !important;
+    border: none !important;
+}
 
-    .tizen-fs video {
-        width: 100% !important;
-        height: 100% !important;
-        border-radius: 0 !important;
-        border: none !important;
-    }
+.simulated-fs video {
+    width: 100% !important;
+    height: 100% !important;
+    border: none !important;
+    border-radius: 0 !important;
+}
 
-    .tizen-fs .chat {
-        flex: 1 !important;
-        padding: 10px !important;
-    }
+.simulated-fs .chat {
+    flex: 1 !important;
+    padding: 10px !important;
+}
+
 
 </style>
 </head>
@@ -193,10 +192,12 @@
                 const container = document.getElementById("stream-container");
 
                 // ---- TIZEN: FULLSCREEN SIMULADO ----
-                if (isTizen()) {
-                    container.classList.toggle("tizen-fs");
-                    return;
-                }
+                function toggleFullscreen() {
+    const container = document.getElementById("stream-container");
+
+    // Activar/desactivar fullscreen simulado
+    container.classList.toggle("simulated-fs");
+}
 
                 // ---- FULLSCREEN REAL ----
                 if (!document.fullscreenElement) {

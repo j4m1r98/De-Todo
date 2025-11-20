@@ -15,7 +15,7 @@
         color: white;
     }
 
-    /* Contenedor principal que se pondrá en fullscreen o pseudo-fullscreen Tizen */
+    /* Contenedor principal (simularemos fullscreen por CSS) */
     #stream-container {
         display: flex;
         flex: 1;
@@ -107,46 +107,40 @@
         color: black;
     }
 
-    /* Ocultar título y menú en fullscreen real */
-    #stream-container:fullscreen .hide-on-fs {
+    /* FULLSCREEN SIMULADO (FUNCIONA EN TIZEN) */
+    .simulated-fs {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex !important;
+        background: #0e0e10 !important;
+        z-index: 999999 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .simulated-fs .hide-on-fs {
         display: none !important;
     }
 
-    /* Fullscreen simulado para TODOS los navegadores (incluyendo Tizen) */
-.simulated-fs {
-    position: fixed !important;
-    inset: 0 !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    display: flex !important;
-    background: #0e0e10 !important;
-    z-index: 999999 !important;
-}
+    .simulated-fs .main {
+        flex: 3 !important;
+        padding: 0 !important;
+        border: none !important;
+    }
 
-/* Ocultar título, menú, bordes, etc. */
-.simulated-fs .hide-on-fs {
-    display: none !important;
-}
+    .simulated-fs video {
+        width: 100% !important;
+        height: 100% !important;
+        border: none !important;
+        border-radius: 0 !important;
+    }
 
-.simulated-fs .main {
-    flex: 3 !important;
-    padding: 0 !important;
-    border: none !important;
-}
-
-.simulated-fs video {
-    width: 100% !important;
-    height: 100% !important;
-    border: none !important;
-    border-radius: 0 !important;
-}
-
-.simulated-fs .chat {
-    flex: 1 !important;
-    padding: 10px !important;
-}
-
-
+    .simulated-fs .chat {
+        flex: 1 !important;
+        padding: 10px !important;
+    }
 </style>
 </head>
 <body>
@@ -154,7 +148,7 @@
 <div id="stream-container">
 
     <div class="main">
-        
+
         <h1 class="hide-on-fs">Título del Stream</h1>
 
         <nav class="hide-on-fs">
@@ -181,30 +175,10 @@
                 video.src = videoSrc;
             }
 
-            // Detecta Tizen
-            function isTizen() {
-                return navigator.userAgent.toLowerCase().includes("tizen");
-            }
-
-            // Fullscreen híbrido (normal + simulado Tizen)
+            // FULLSCREEN 100% COMPATIBLE (SIMULADO)
             function toggleFullscreen() {
-
                 const container = document.getElementById("stream-container");
-
-                // ---- TIZEN: FULLSCREEN SIMULADO ----
-                function toggleFullscreen() {
-    const container = document.getElementById("stream-container");
-
-    // Activar/desactivar fullscreen simulado
-    container.classList.toggle("simulated-fs");
-}
-
-                // ---- FULLSCREEN REAL ----
-                if (!document.fullscreenElement) {
-                    container.requestFullscreen().catch(err => console.log(err));
-                } else {
-                    document.exitFullscreen();
-                }
+                container.classList.toggle("simulated-fs");
             }
         </script>
 

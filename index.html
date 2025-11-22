@@ -66,8 +66,8 @@ body.fullscreen-mode .status,
         /* Ajustar video para fullscreen */
         body.fullscreen-mode .video-container {
             width: 100% !important;
-            height: 100% !important;
-            padding-bottom: 0 !important;
+            height: 100vh !important;
+            padding: 0 !important;
             border-radius: 0 !important;
         }
 
@@ -89,6 +89,10 @@ body.fullscreen-mode .status,
         }
 
         body.fullscreen-mode #messages-container {
+            flex: 1;
+        }
+
+        body.fullscreen-mode .footer {
             flex: 1;
         }
         
